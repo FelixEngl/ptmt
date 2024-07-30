@@ -1,0 +1,28 @@
+start: column _LANGUAGE_SEPARATOR column (_LANGUAGE_SEPARATOR column)*
+    column: column_content (_COLUMN_SEPARATOR column_content)*
+    column_content: content_separated_content
+    content_separated_content: (value|info)+
+    content_info: (value_info|info)+ -> content_separated_content
+
+    info: "(" content_info ")" -> addition_info
+        | "[" content_info "]" -> topic_info
+        | "{" content_info "}" -> meta_info
+        | "<" content_info ">" -> reference_info
+
+    value: DICT_WORD -> word 
+         | SEPARATOR -> separator
+         | PUNCTUATION_ALL -> punctuation
+         | LETTER_LIKE -> letter_like
+         | SPECIAL_WORD -> special_word
+         | SPECIAL_CHARACTER -> special_character
+         | _html_encoded -> html_encoded
+         | MISCELLANEOUS_SYMBOLS -> miscellaneous_symbols
+
+    !value_info: value
+               | _COLUMN_SEPARATOR -> separator
+
+    !_html_encoded: "&#"DICT_WORD";"
+
+
+    %import .Test_defaults (DICT_WORD, LETTER_LIKE, MISCELLANEOUS_SYMBOLS, _COLUMN_SEPARATOR, _LANGUAGE_SEPARATOR, SPECIAL_CHARACTER, SPECIAL_WORD, UNICODE, WS_INTERNAL, PUNCTUATION_ALL, SEPARATOR)
+    %ignore WS_INTERNAL

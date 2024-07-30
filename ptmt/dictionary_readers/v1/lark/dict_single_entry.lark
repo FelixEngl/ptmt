@@ -1,0 +1,31 @@
+start: _separated{column_content, _COLUMN_SEPARATOR}
+    column_content: _separated{content_separated_content, _ALTERNATIVE_SEPARATOR}
+    content_separated_content: (value|info)+
+    content_info: (value_info|info)+ -> content_separated_content
+    //use the template
+
+    info: "(" content_info ")" -> addition_info // <name> : <items-to-match>  [-> <alias> ]
+        | "[" content_info "]" -> topic_info
+        | "{" content_info "}" -> meta_info
+        | "<" content_info ">" -> reference_info
+        | ("<>"|"->") -> special_word
+
+    value: DICT_WORD -> word // <name> : <items-to-match>  [-> <alias> ]
+         | SEPARATOR -> separator
+         | PUNCTUATION_ALL -> punctuation
+         | LETTER_LIKE -> letter_like
+         | SPECIAL_WORD -> special_word
+         | SPECIAL_CHARACTER -> special_character
+         | _html_encoded -> html_encoded
+         | MISCELLANEOUS_SYMBOLS -> miscellaneous_symbols 
+
+    !value_info: value
+              | (_ALTERNATIVE_SEPARATOR|_COLUMN_SEPARATOR) -> separator
+
+
+    !_html_encoded: "&#"DICT_WORD";"
+
+    _separated{x, sep}: x (sep x)* // define a template
+
+    %import .dict_defaults (DICT_WORD, LETTER_LIKE, MISCELLANEOUS_SYMBOLS, _COLUMN_SEPARATOR, _LANGUAGE_SEPARATOR, SPECIAL_CHARACTER, SPECIAL_WORD, UNICODE, WS_INTERNAL, PUNCTUATION_ALL, SEPARATOR, _ALTERNATIVE_SEPARATOR)   
+    %ignore WS_INTERNAL

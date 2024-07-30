@@ -1,0 +1,1 @@
+from ptmt.corpus_extraction.file_processor import extract_wikicomp_into

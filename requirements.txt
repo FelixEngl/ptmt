@@ -1,0 +1,21 @@
+numpy == 1.26
+scipy == 1.12.0
+jsonpickle
+tomotopy
+matplotlib
+lxml
+langcodes
+lark
+pympler
+mwparserfromhell
+split-file-reader
+nltk
+marisa-trie
+unidecode
+gensim == 4.3.2
+pyLDAvis
+openpyxl
+# pytest
+more-itertools
+adjustText
+fraction
