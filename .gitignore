@@ -1,13 +1,18 @@
 /data/aligned_articles_corpus/wikicomp-2014_deen.xml.bz2
 /data/ldatranslate-0.1.0-cp312-none-win_amd64.whl
 /wheels
-/data/dictionaries/DictCC/
-/data/dictionaries/dicts.info/
-/data/dictionaries/ding/
-/data/dictionaries/eurovoc/
-/data/dictionaries/freedict/
-/data/dictionaries/IATE/
-/data/dictionaries/Microsoft TermCollection/
-/data/dictionaries/MUSE/
-/data/dictionaries/Wiktionary/
+/data/dictionaries/DictCC/dict.txt
+/data/dictionaries/dicts.info/english*
+/data/dictionaries/dicts.info/Omega*
+/data/dictionaries/dicts.info/Wikipedia*
+/data/dictionaries/ding/de-en.txt
+/data/dictionaries/eurovoc/*dtd
+/data/dictionaries/eurovoc/*xml
+/data/dictionaries/freedict/de*
+/data/dictionaries/freedict/en*
+/data/dictionaries/IATE/*.tbx
+/data/dictionaries/IATE/IATE*
+/data/dictionaries/Microsoft TermCollection/*.tbx
+/data/dictionaries/MUSE/*.gz
+/data/dictionaries/Wiktionary/transformed
 /tmt
