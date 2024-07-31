@@ -117,7 +117,7 @@ def run(
             colors=colormaps.get("prism")
         ),
         bar_plot_args=BarPlotKWArgs(
-            highlight=("P5", "G5", "P3", "M3", "C5*", "DL*", "B3*"),
+            highlight=("P5", "G5", "P3", "M3", "C5*", "B3*"),
             label_rotation=270,
             y_label_rotation=270,
             y_label_labelpad=20,
