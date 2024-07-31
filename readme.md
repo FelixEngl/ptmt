@@ -22,3 +22,4 @@ The original rust implementation of TMT is at https://github.com/FelixEngl/tmt/.
 - Open the file ``experiment.py``
   - Change the parameters if necessary.
   - Start the program (This may take a while!)
+- 6-9h

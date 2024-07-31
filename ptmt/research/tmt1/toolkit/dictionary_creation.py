@@ -138,7 +138,7 @@ def make_dictionary(
         print(f"Create data: {output_path}")
         process_data(path_to_data, output_path, create_processor(**processor_kwargs), tmp_folder, token_filter)
     else:
-        print(f"Found: {output_path}")
+        print(f"Found normal data: {output_path}")
 
     if output_path_phrases is not None and not Path(output_path_phrases).exists():
         print(f"Create out: {output_path_phrases}")
@@ -149,6 +149,6 @@ def make_dictionary(
         )
         process_data(path_to_data, output_path_phrases, processor_with_phrases, tmp_folder, token_filter)
     else:
-        print(f"Found: {output_path_phrases}")
+        print(f"Found phrases data: {output_path_phrases}")
 
     return dictionary

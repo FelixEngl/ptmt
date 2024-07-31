@@ -33,6 +33,8 @@ def create_corpus(
     with input_path.open("r", encoding="UTF-8") as inp:
         for line in inp:
             loaded: TokenizedValue = jsonpickle.loads(line)
+            if len(loaded.entries) < 2:
+                continue
             words = loaded.entries[language].tokenized
             if token_filter is not None and len(words) not in token_filter:
                 continue

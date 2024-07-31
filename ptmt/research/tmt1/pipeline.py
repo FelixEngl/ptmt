@@ -77,7 +77,7 @@ class LinePlotKWArgs(TypedDict, total=False):
 class _RunSingleKWArgs(TypedDict):
     original_data_path: Path
     processor: PyAlignedArticleProcessor
-    data_dir: DataDirectory
+    # data_dir: DataDirectory
     inp: Path
     test_ids: list[int] | Fraction
     token_filter: TokenCountFilter | None
@@ -100,9 +100,9 @@ class _RunSingleKWArgs(TypedDict):
 
 def run_single(
         marker: str,
+        data_dir: DataDirectory,
         original_data_path: Path,
         processor: PyAlignedArticleProcessor,
-        data_dir: DataDirectory,
         inp: Path,
         test_ids: list[int] | Fraction,
         token_filter: TokenCountFilter | None,
@@ -531,7 +531,6 @@ def run_pipeline(
     args = _RunSingleKWArgs(
         original_data_path=data_path,
         processor=create_processor(**processor_kwargs),
-        data_dir=docs,
         inp=processed_data,
         test_ids=test_ids,
         token_filter=token_filter,
@@ -556,6 +555,7 @@ def run_pipeline(
     if docs is not None:
         run_single(
             "no_phrases",
+            docs,
             **args
         )
 
@@ -581,7 +581,7 @@ def run_pipeline(
 
         args_copy = dict(args)
         args_copy["filters"] = ((_filter_a1, _filter_a1), (_filter_a2, _filter_a2))
-        run_single("filtered_dict", **args_copy)
+        run_single("filtered_dict", docs_filtered, **args_copy)
 
     if docs_filtered_phrase is not None:
         def _filter_a1(word: str, _: SolvedMetadata | None) -> bool:
@@ -605,13 +605,14 @@ def run_pipeline(
 
         args_copy = dict(args)
         args_copy["filters"] = ((_filter_a1, _filter_a1), (_filter_a2, _filter_a2))
-        run_single("filtered_dict_no_phrase", **args_copy)
+        run_single("filtered_dict_no_phrase", docs_filtered_phrase, **args_copy)
 
     if docs_phrases is not None:
         args_copy = dict(args)
         args_copy["processor"] = create_processor(**processor_kwargs, phrases_a=dictionary.voc_a, phrases_b=dictionary.voc_b)
         run_single(
             "phrases",
+            docs_phrases,
             **args_copy
         )
 

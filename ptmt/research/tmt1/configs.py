@@ -117,7 +117,7 @@ def create_configs() -> list[TranslationConfig]:
             real_voting, real_name_shown = construct_real_voting_and_name(t)
             real_id = voting_id + str(idx2)
             configs.append(
-                TranslationConfig(
+                TranslationConfigV1(
                     real_name_shown,
                     real_id,
                     (idx1, idx2),
