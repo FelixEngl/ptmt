@@ -1,4 +1,4 @@
-# Initializes the repository.
+# Initializes the tmt.
 import subprocess
 import sys
 from os import path
@@ -24,6 +24,11 @@ if __name__ == '__main__':
             "--out", str(tmt),
             "--release",
         ],
+        cwd=str((cwd / "tmt").absolute())
+    )
+
+    subprocess.check_call(
+        ["cargo", "clean"],
         cwd=str((cwd / "tmt").absolute())
     )
 

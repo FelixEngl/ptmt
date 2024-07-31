@@ -113,13 +113,13 @@ def read_chunk_wise(path: str | PathLike[str] | Path) -> Iterator[RawArticlePair
                             ct += 1
                             yield lst[0]
                     except lxml.etree.XMLSyntaxError as error:
-                        print(f"Invalid syntax in {col[0]} {error}")
+                        print(f"Invalid syntax in {col[0]}: {error}")
                     except IllegalNesting as error:
-                        print(f'Invalid nesting for {col[0]} {error}')
+                        print(f'Invalid nesting for {col[0]}: {error}')
                     except IllegalPosition as error:
-                        print(f'Invalid position for {col[0]} {error}')
+                        print(f'Invalid position for {col[0]}: {error}')
                     except IllegalNumberOfArticles as error:
-                        print(f'Invalid number of articles for {col[0]} {error}')
+                        print(f'Invalid number of articles for {col[0]}: {error}')
                     except Exception as e:
                         for i, x in enumerate(col):
                             print(f"{i + 1}: {x.strip()}")
@@ -127,7 +127,6 @@ def read_chunk_wise(path: str | PathLike[str] | Path) -> Iterator[RawArticlePair
                 in_pair = False
                 col.clear()
     yield from _read_split_tar_wikicomp(path, _read)
-
 
 
 def extract_wikicomp_into(
@@ -146,7 +145,7 @@ def extract_wikicomp_into(
         save_path_categories = Path(save_path_categories)
     save_path.parent.mkdir(parents=True, exist_ok=True)
     save_path_categories.parent.mkdir(parents=True, exist_ok=True)
-
+    print(f"Start parsing {inp}")
     cat_sup = CategorySupplier()
     ct_list = 0
     try:

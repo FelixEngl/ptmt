@@ -62,15 +62,16 @@ def color_provider3(text: str) -> MPLColor | None:
 
 def run(
         target_folder: Path | PathLike | str,
-        path_to_extracted_data: Path | PathLike | str,
-        path_to_the_dictionaries: Path | PathLike | str,
-        path_to_raw_data: Path | PathLike | str | None = None
+        path_to_raw_dictionaries: Path | PathLike | str,
+        path_to_raw_data: Path | PathLike | str | None = None,
+        temp_folder: Path | PathLike | str | None = None,
 ):
-    path_to_extracted_data = path_to_extracted_data \
-        if isinstance(path_to_extracted_data, Path) \
-        else Path(path_to_extracted_data)
+    target_folder = target_folder if isinstance(target_folder, Path) else Path(target_folder)
+
+    path_to_extracted_data = target_folder / "preprocessed" / "extracted_data.bulkjson"
 
     if not path_to_extracted_data.exists():
+        print(f"{path_to_extracted_data} does not exist! Trying to create the preprocessed data.")
         assert path_to_raw_data is not None, \
             f"The extracted data was not found at {path_to_extracted_data}, requires a path_to_raw_data!"
         path_to_raw_data = path_to_raw_data \
@@ -88,21 +89,23 @@ def run(
         extract_wikicomp_into(
             path_to_raw_data,
             path_to_extracted_data,
-            path_to_extracted_data.parent / f"{path_to_raw_data.stem}_categories.json"
+            path_to_extracted_data.parent / f"extracted_data_categories.json"
         )
+
+        print("Finished preprocessing data.")
 
     run_pipeline(
         "en",
         "de",
         path_to_extracted_data,
         target_folder,
-        path_to_the_dictionaries,
+        path_to_raw_dictionaries,
         "my_dictionary.dict",
         "f",
         test_ids,
         default_processor_kwargs,
         TokenCountFilter(50, 1000),
-        "E:/tmp",
+        temp_folder,
         1000,
         False,
         mark_baselines=True,
@@ -120,7 +123,7 @@ def run(
             y_label_labelpad=20,
             label_colors=color_provider3
         ),
-        coocurences_kwargs=CoocurrencesKwArgs(coocurrences=('u_mass', 'c_w2v'))
+        coocurences_kwargs=False
     )
 
 

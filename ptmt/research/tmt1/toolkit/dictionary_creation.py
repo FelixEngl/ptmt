@@ -135,7 +135,7 @@ def make_dictionary(
         dictionary = PyDictionary.load(dictionary_path)
 
     if output_path is not None and not Path(output_path).exists():
-        print(f"Create out: {output_path}")
+        print(f"Create data: {output_path}")
         process_data(path_to_data, output_path, create_processor(**processor_kwargs), tmp_folder, token_filter)
     else:
         print(f"Found: {output_path}")

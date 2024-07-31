@@ -67,13 +67,11 @@ def extract(source: typing.TextIO | typing.BinaryIO) -> Iterator[RawArticlePair]
 
     stack = collections.deque()
     art_ct = 0
-
-    for event, element in ET.iterparse(source, events=('start', 'end'), no_network=True, recover=True):
+    for event, element in ET.iterparse(source, encoding='UTF-8', events=('start', 'end'), no_network=True, recover=True):
         element: ET.ElementBase
-
         if event == "start":
             if element.tag == 'article' and 'article' in stack:
-                raise IllegalNesting("Article is always singular top level!")
+                raise IllegalNesting(f"Article <{element.tag} {element.attrib}> is at an illegal position!")
             stack.append(element.tag)
         else:
             assert event == 'end'
@@ -101,6 +99,7 @@ def extract(source: typing.TextIO | typing.BinaryIO) -> Iterator[RawArticlePair]
             case "end", "categories", False:
                 pass
             case "end", "article", False:
+
                 is_list = False
                 for cat in current_categories:
                     if re.search("List[se]", cat) is not None:
