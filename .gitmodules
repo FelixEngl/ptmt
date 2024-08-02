@@ -1,3 +1,4 @@
 [submodule "tmt"]
 	path = tmt
 	url = https://github.com/FelixEngl/tmt.git
+    branch = master

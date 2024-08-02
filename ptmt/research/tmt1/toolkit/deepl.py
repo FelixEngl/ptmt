@@ -1,3 +1,17 @@
+# Copyright 2024 Felix Engl
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import typing
 from os import PathLike
 from pathlib import Path
@@ -56,9 +70,9 @@ def deepl_translate(
                             current = None
                             for value in found:
                                 if current is None:
-                                    current = value, int(original_dictionary.get_meta_b_of(value).meta_tags[0])
+                                    current = value, int(original_dictionary.get_meta_b_of(value).subjects[0])
                                 else:
-                                    other = int(original_dictionary.get_meta_b_of(value).meta_tags[0])
+                                    other = int(original_dictionary.get_meta_b_of(value).subjects[0])
                                     if current[1] < other:
                                         current = value, other
                             f.write(f"{current[0]}\n")
@@ -100,9 +114,9 @@ def deepl_translate(
                             current = None
                             for value in found:
                                 if current is None:
-                                    current = value, int(original_dictionary.get_meta_b_of(value).meta_tags[0])
+                                    current = value, int(original_dictionary.get_meta_b_of(value).subjects[0])
                                 else:
-                                    other = int(original_dictionary.get_meta_b_of(value).meta_tags[0])
+                                    other = int(original_dictionary.get_meta_b_of(value).subjects[0])
                                     if current[1] < other:
                                         current = value, other
                             topic_mapping[idx] = res

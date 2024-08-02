@@ -1,3 +1,17 @@
+# Copyright 2024 Felix Engl
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from os import PathLike
 from pathlib import Path
 
@@ -65,6 +79,7 @@ def run(
         path_to_raw_dictionaries: Path | PathLike | str,
         path_to_raw_data: Path | PathLike | str | None = None,
         temp_folder: Path | PathLike | str | None = None,
+        deepl: bool = False
 ):
     target_folder = target_folder if isinstance(target_folder, Path) else Path(target_folder)
 
@@ -107,7 +122,7 @@ def run(
         TokenCountFilter(50, 1000),
         temp_folder,
         1000,
-        False,
+        deepl,
         mark_baselines=True,
         generate_Excel=True,
         ndcg_kwargs={

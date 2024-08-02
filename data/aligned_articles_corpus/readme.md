@@ -1,6 +1,7 @@
 Origin: https://linguatools.org/tools/corpora/wikipedia-comparable-corpora/
+(A Backup of the Website is stored alongside the readme.md)
 
-
+Dropbox Link: https://www.dropbox.com/scl/fi/808m6tuztu6w8f1e5704r/wikicomp-2014_deen.xml.bz2?rlkey=pyh6nd8ydsdcih1yg91y62wbb&e=1&dl=0
 
 ## File Format:
 

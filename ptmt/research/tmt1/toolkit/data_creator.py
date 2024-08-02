@@ -1,3 +1,17 @@
+# Copyright 2024 Felix Engl
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import dataclasses
 import typing
 from os import PathLike
@@ -164,7 +178,6 @@ def create_train_data(
                     data: Path = data
                     for value in read_aligned_articles(str(data), True):
                         if value.article_id in test_ids and value.article_id not in created_test_data:
-                            print(f"Add {value.article_id}")
                             value = process_entry(proc.process(value), stop_words=stop_words)
                             created_test_data.add(value.id)
                             test_out.write(jsonpickle.dumps(value) + "\n")

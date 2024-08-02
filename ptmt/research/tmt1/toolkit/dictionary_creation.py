@@ -1,3 +1,18 @@
+# Copyright 2024 Felix Engl
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
 import re
 from os import PathLike
 
@@ -26,6 +41,7 @@ def process_data(
     options.delete_temp_files_immediately = False
     options.deflate_temp_files = False
     options.compress_result = False
+    options.show_progress_after = 1_000
 
     result = read_and_parse_aligned_articles_into(
         path_to_data,
@@ -76,8 +92,8 @@ def create_dictionary(
             entry.set_dictionary_b_value(element.origin)
         entry.set_unstemmed_word_a(element.langA.strip(), element.origin)
         entry.set_unstemmed_word_b(element.langB.strip(), element.origin)
-        entry.set_meta_a_value(languages.langA.language)
-        entry.set_meta_b_value(languages.langB.language)
+        entry.set_subject_a_value(languages.langA.language)
+        entry.set_subject_b_value(languages.langB.language)
         dictionary.add(entry)
         if ct % 100000 == 0:
             print(f"Stored {ct} entries")
