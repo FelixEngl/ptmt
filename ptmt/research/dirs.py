@@ -21,7 +21,7 @@ from pathlib import Path
 import jsonpickle
 from _tomotopy import LDAModel
 from gensim.models import CoherenceModel
-from ldatranslate.ldatranslate import PyTopicModel
+from ldatranslate import PyTopicModel
 from tomotopy.utils import Corpus
 
 from ptmt.research.protocols import TranslationConfig

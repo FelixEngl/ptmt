@@ -15,7 +15,7 @@
 from os import PathLike
 from pathlib import Path
 
-from ldatranslate.ldatranslate import PyStemmingAlgorithm, TokenCountFilter
+from ldatranslate import PyStemmingAlgorithm, TokenCountFilter
 from matplotlib.pyplot import colormaps
 
 from ptmt.research.helpers.article_processor_creator import PyAlignedArticleProcessorKwArgs
@@ -142,5 +142,4 @@ def run(
     )
 
 
-if __name__ == '__main__':
-    print("Hello")
+

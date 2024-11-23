@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ldatranslate.ldatranslate import PyToken, PyTokenKind, PyAlignedArticleProcessor, LanguageHint
+from ldatranslate import PyToken, PyTokenKind, PyAlignedArticleProcessor, LanguageHint
 
 from ptmt.research.tmt1.toolkit.codepoint_filter import is_illegal_char
 

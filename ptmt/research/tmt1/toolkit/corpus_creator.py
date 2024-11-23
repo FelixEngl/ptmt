@@ -16,7 +16,7 @@ from os import PathLike
 from pathlib import Path
 
 import jsonpickle
-from ldatranslate.ldatranslate import TokenCountFilter
+from ldatranslate import TokenCountFilter
 from tomotopy.utils import Corpus
 
 from ptmt.research.dirs import DataDirectory

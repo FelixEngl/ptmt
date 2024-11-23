@@ -15,7 +15,7 @@
 import dataclasses
 import typing
 
-from ldatranslate.ldatranslate import PyTranslationConfig, KeepOriginalWord
+from ldatranslate import PyTranslationConfig, KeepOriginalWord
 
 from ptmt.research.protocols import TranslationConfig
 

@@ -18,7 +18,7 @@ from os import PathLike
 
 import cycler
 import numpy as np
-from ldatranslate.ldatranslate import PyTopicModel
+from ldatranslate import PyTopicModel
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 

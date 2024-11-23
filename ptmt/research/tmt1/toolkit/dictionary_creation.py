@@ -17,7 +17,7 @@ import re
 from os import PathLike
 
 import langcodes
-from ldatranslate.ldatranslate import LanguageHint, PyAlignedArticleProcessor, PyDictionary, PyDictionaryEntry, \
+from ldatranslate import LanguageHint, PyAlignedArticleProcessor, PyDictionary, \
     TokenCountFilter, StoreOptions, read_and_parse_aligned_articles_into
 
 from ptmt.dictionary_readers.v1.buildscript import load_from_multiple_sources
@@ -59,7 +59,7 @@ def create_dictionary(
         lang_b: LanguageHint | str,
         dictionary_path: str | PathLike | Path,
         processor: PyAlignedArticleProcessorKwArgs | PyAlignedArticleProcessor,
-        *sources: DictionaryReaderLike,
+        # *sources: DictionaryReaderLike,
 ) -> tuple[PyDictionary, LanguagePair]:
     if isinstance(processor, dict):
         processor = create_processor(**processor)

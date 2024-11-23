@@ -15,7 +15,7 @@
 import abc
 import typing
 
-from ldatranslate.ldatranslate import PyTranslationConfig, KeepOriginalWord
+from ldatranslate import PyTranslationConfig, KeepOriginalWord
 
 
 @typing.runtime_checkable

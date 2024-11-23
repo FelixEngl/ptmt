@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Callable
 
 import jsonpickle
-from ldatranslate.ldatranslate import PyDictionary, SolvedMetadata, translate_topic_model
+from ldatranslate import PyDictionary, SolvedMetadata, translate_topic_model
 
 from ptmt.research.dirs import DataDirectory
 from ptmt.research.lda_model import create_ratings

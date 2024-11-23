@@ -17,7 +17,7 @@ from pathlib import Path
 
 from _tomotopy import LDAModel
 from ldatranslate.convert_tomotopy_lda import tomotopy_to_topic_model
-from ldatranslate.ldatranslate import TokenCountFilter, PyTopicModel
+from ldatranslate import TokenCountFilter, PyTopicModel
 
 from ptmt.lda.training import create_by_corpus
 from ptmt.research.dirs import DataDirectory

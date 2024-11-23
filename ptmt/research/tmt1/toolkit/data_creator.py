@@ -19,7 +19,7 @@ from pathlib import Path
 
 import jsonpickle
 from fraction import Fraction
-from ldatranslate.ldatranslate import PyTokenizedAlignedArticle, TokenCountFilter, PyStopWords, \
+from ldatranslate import PyTokenizedAlignedArticle, TokenCountFilter, PyStopWords, \
     PyArticle, PyTokenKind, PyAlignedArticleProcessor, read_aligned_parsed_articles, read_aligned_articles, PyToken
 
 from ptmt.research.tmt1.toolkit.codepoint_filter import is_illegal_char

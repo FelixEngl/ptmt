@@ -17,7 +17,7 @@ from os import PathLike
 from pathlib import Path
 
 import jsonpickle
-from ldatranslate.ldatranslate import LanguageHint
+from ldatranslate import LanguageHint
 
 from ptmt.research.tmt1.toolkit.data_creator import TokenizedValue
 

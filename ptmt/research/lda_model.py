@@ -18,7 +18,7 @@ import typing
 from pathlib import Path
 
 from ldatranslate.convert_tomotopy_lda import tomotopy_to_topic_model
-from ldatranslate.ldatranslate import PyTopicModel
+from ldatranslate import PyTopicModel
 from tomotopy import LDAModel
 from tomotopy.utils import Corpus
 

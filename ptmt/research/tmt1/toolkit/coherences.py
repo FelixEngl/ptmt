@@ -21,7 +21,7 @@ from typing import TypedDict, Callable
 import gensim
 from gensim.corpora import Dictionary
 from gensim.models import CoherenceModel
-from ldatranslate.ldatranslate import PyTopicModel, TokenCountFilter
+from ldatranslate import PyTopicModel, TokenCountFilter
 
 from ptmt.lda.topic_model import CoherenceModelData
 from ptmt.research.dirs import DataDirectory, CoherencesDir

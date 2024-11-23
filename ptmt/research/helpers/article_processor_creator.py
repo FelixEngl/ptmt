@@ -14,7 +14,7 @@
 
 from typing import TypedDict
 
-from ldatranslate.ldatranslate import PyVocabulary, PyAlignedArticleProcessor, PyTokenizerBuilder, PyStemmingAlgorithm
+from ldatranslate import PyVocabulary, PyAlignedArticleProcessor, PyTokenizerBuilder, PyStemmingAlgorithm
 
 from ptmt.toolkit.stopwords import get_stop_words
 

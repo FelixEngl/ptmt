@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ldatranslate.ldatranslate import PyArticle, PyAlignedArticle
+from ldatranslate import PyArticle, PyAlignedArticle
 
 from ptmt.corpus_extraction.align import Article, AlignedArticles
 

@@ -20,7 +20,7 @@ from typing import TypedDict
 
 import matplotlib
 from fraction import Fraction
-from ldatranslate.ldatranslate import *
+from ldatranslate import *
 from matplotlib import pyplot as plt
 
 from ptmt.dictionary_readers.v1.dictionaries import DictionaryReaderLike

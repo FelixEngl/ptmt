@@ -17,7 +17,7 @@ from os import PathLike
 from pathlib import Path
 
 import jsonpickle
-from ldatranslate.ldatranslate import PyDictionary, PyAlignedArticleProcessor, LanguageHint
+from ldatranslate import PyDictionary, PyAlignedArticleProcessor, LanguageHint
 
 from ptmt.research.dirs import DataDirectory
 from ptmt.research.lda_model import create_ratings
