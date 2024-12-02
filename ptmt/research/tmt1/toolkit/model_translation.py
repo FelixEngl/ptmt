@@ -19,26 +19,27 @@ from pathlib import Path
 from typing import Callable
 
 import jsonpickle
-from ldatranslate import PyDictionary, SolvedMetadata, translate_topic_model
+import ldatranslate
+from ldatranslate import PyDictionary, translate_topic_model, LoadedMetadataEx, MetaField
 
 from ptmt.research.dirs import DataDirectory
 from ptmt.research.lda_model import create_ratings
 from ptmt.research.protocols import TranslationConfig
 from ptmt.research.tmt1.toolkit.data_creator import TokenizedValue
 
-_DICTIONARY_FILTER = Callable[[str, SolvedMetadata | None], bool]
+_DICTIONARY_FILTER = Callable[[str, LoadedMetadataEx | None], bool]
 SINGLE_FILTER = tuple[_DICTIONARY_FILTER, _DICTIONARY_FILTER]
 
 
-def _filter_iate_and_msterms_wrapper(f: Callable[[str, SolvedMetadata | None], bool]) -> _DICTIONARY_FILTER:
+def _filter_iate_and_msterms_wrapper(f: Callable[[str, LoadedMetadataEx | None], bool]) -> _DICTIONARY_FILTER:
     @functools.wraps(f)
-    def wrapper(word: str, meta: SolvedMetadata | None) -> bool:
+    def wrapper(word: str, meta: LoadedMetadataEx | None) -> bool:
         if meta is not None:
-            assoc = meta.associated_dictionaries
+            assoc = list(meta.associated_dictionaries())
             if len(assoc) == 1:
-                return assoc[0] != "IATE" and assoc[0] != "ms_terms"
+                return assoc[0] != "iate" and assoc[0] != "ms_terms"
             if len(assoc) == 2:
-                return all(x == "IATE" or x == "ms_terms" for x in assoc)
+                return all(x == "iate" or x == "ms_terms" for x in assoc)
         return f(word, meta)
 
     return wrapper
@@ -52,7 +53,7 @@ def translate_models(
         test_data: Path | PathLike | str,
         limit: int | None,
         filters: tuple[SINGLE_FILTER, SINGLE_FILTER] | None,
-        configs: typing.Iterable[TranslationConfig] | Callable[[], typing.Iterable[TranslationConfig]]
+        configs: typing.Collection[TranslationConfig] | Callable[[], typing.Collection[TranslationConfig]]
 ):
     if callable(configs):
         my_configs = configs()
@@ -73,14 +74,24 @@ def translate_models(
 
 
     if filters is None:
-        def _default(_word: str, _meta: SolvedMetadata | None) -> bool:
+        def _default(_word: str, _meta: LoadedMetadataEx | None) -> bool:
             return True
         filters = (_default, _default), (_filter_iate_and_msterms_wrapper(_default), _filter_iate_and_msterms_wrapper(_default))
     else:
         filters = filters[0], tuple(_filter_iate_and_msterms_wrapper(value) for value in filters[1])
 
     d1: PyDictionary = (dictionary if isinstance(dictionary, PyDictionary) else PyDictionary.load(dictionary)).filter(*filters[0])
+    d1.drop_all_except(
+        MetaField.Domains,
+        MetaField.Registers,
+        MetaField.UnalteredVocabulary
+    )
     d2: PyDictionary = d1.filter(*filters[1])
+    d2.drop_all_except(
+        MetaField.Domains,
+        MetaField.Registers,
+        MetaField.UnalteredVocabulary
+    )
 
     original_model, topic_model = out_dir.load_original_models()
 
@@ -129,13 +140,22 @@ def translate_models(
 
         translated = translate_topic_model(topic_model, d, config.voting, cfg)
 
+        print("Save config json.")
         config_pickle = jsonpickle.dumps(config)
         cfg_json = targ.config_path
         cfg_json.write_text(config_pickle)
+        print("Save translation.")
         translated.save_binary(targ.model_path)
         translated.show_top(10)
+        print("Create ratings.")
         b_ratings = create_ratings(translated, original_model.alpha, 0.01, b_data)
         assert len(b_ratings) == len(b_data)
-        targ.rating_path.write_text(jsonpickle.dumps(b_ratings))
+        print("Save ratings json.")
+        ldatranslate.save_ratings(targ.rating_path, b_ratings)
+        del b_ratings
+        del translated
+        del cfg_json
+        del config_pickle
+        print("Translate next after cleanup.")
     print("Finished translating!")
 

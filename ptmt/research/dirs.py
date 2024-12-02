@@ -19,6 +19,7 @@ from collections import defaultdict
 from pathlib import Path
 
 import jsonpickle
+import ldatranslate
 from _tomotopy import LDAModel
 from gensim.models import CoherenceModel
 from ldatranslate import PyTopicModel
@@ -168,12 +169,12 @@ class LazyLoadingEntry:
     @property
     def rating(self) -> Rating:
         if self._rating is None:
-            self._rating = tuple(jsonpickle.loads(self.rating_path.read_text()))
+            self._rating = tuple(ldatranslate.load_ratings(self.rating_path))
         return list(self._rating)
 
     def rating_uncached(self) -> Rating:
         if self._rating is None:
-            return jsonpickle.loads(self.rating_path.read_text())
+            return ldatranslate.load_ratings(self.rating_path)
         return list(self._rating)
 
     @property

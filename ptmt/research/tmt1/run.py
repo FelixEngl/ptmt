@@ -76,7 +76,7 @@ def color_provider3(text: str) -> MPLColor | None:
 
 def run(
         target_folder: Path | PathLike | str,
-        path_to_raw_dictionaries: Path | PathLike | str,
+        path_to_original_dictionary: Path | PathLike | str,
         path_to_raw_data: Path | PathLike | str | None = None,
         temp_folder: Path | PathLike | str | None = None,
         deepl: bool = False
@@ -114,8 +114,8 @@ def run(
         "de",
         path_to_extracted_data,
         target_folder,
-        path_to_raw_dictionaries,
-        "my_dictionary.dict",
+        path_to_original_dictionary,
+        "my_dictionary.dat.zst",
         "f",
         test_ids,
         default_processor_kwargs,

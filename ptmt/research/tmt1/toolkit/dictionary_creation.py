@@ -57,46 +57,23 @@ def process_data(
 def create_dictionary(
         lang_a: LanguageHint | str,
         lang_b: LanguageHint | str,
+        original_dictionary_path: str | PathLike | Path,
         dictionary_path: str | PathLike | Path,
         processor: PyAlignedArticleProcessorKwArgs | PyAlignedArticleProcessor,
-        # *sources: DictionaryReaderLike,
 ) -> tuple[PyDictionary, LanguagePair]:
     if isinstance(processor, dict):
         processor = create_processor(**processor)
-    dictionary = PyDictionary(lang_a, lang_b)
 
     languages = LanguagePair.create(langcodes.get(str(lang_a)), langcodes.get(str(lang_b)))
-    ct = 0
-    for element in load_from_multiple_sources(dictionary_path, languages, *sources, suppress_error_print=True,
-                                              size_conversion=EDictionaryEntrySizeConversion.NONE):
 
-        dat = _process_element(processor, element.langA, lang_a)
-        if dat is None:
-            continue
-        lang_a_origin, lang_a_processed, result_a = dat
-
-        dat = _process_element(processor, element.langB, lang_b)
-        if dat is None:
-            continue
-        lang_b_origin, lang_b_processed, result_b = dat
-
-        assert re.match(r',,|"]', lang_a_processed) is None, \
-            f"The {languages.langA} word {lang_a_processed} ({lang_a_origin}) is not valid! {element}"
-        assert re.match(r',,|"]', lang_b_processed) is None, \
-            f"The {languages.langB} word {lang_b_processed} ({lang_b_origin}) is not valid! {element}"
-
-        ct += 1
-        entry = PyDictionaryEntry(lang_a_processed, lang_b_processed)
-        if element.origin:
-            entry.set_dictionary_a_value(element.origin)
-            entry.set_dictionary_b_value(element.origin)
-        entry.set_unstemmed_word_a(element.langA.strip(), element.origin)
-        entry.set_unstemmed_word_b(element.langB.strip(), element.origin)
-        entry.set_subject_a_value(languages.langA.language)
-        entry.set_subject_b_value(languages.langB.language)
-        dictionary.add(entry)
-        if ct % 100000 == 0:
-            print(f"Stored {ct} entries")
+    original_dictionary_path = Path(original_dictionary_path)
+    dictionary_path = Path(dictionary_path)
+    if dictionary_path.exists():
+        dictionary = PyDictionary.load(dictionary_path)
+    else:
+        dictionary = PyDictionary.load(original_dictionary_path)
+        dictionary = dictionary.process_with_tokenizer(processor)
+        dictionary.save(dictionary_path)
 
     return dictionary, languages
 
@@ -104,7 +81,7 @@ def create_dictionary(
 def make_dictionary(
         lang_a: LanguageHint | str,
         lang_b: LanguageHint | str,
-        original_dictionaries_path: str | PathLike | Path,
+        original_dictionary_path: str | PathLike | Path,
         dictionary_path: Path | PathLike | str,
         path_to_data: Path | PathLike | str,
         output_path_phrases: Path | PathLike | str | None,
@@ -112,40 +89,19 @@ def make_dictionary(
         processor_kwargs: PyAlignedArticleProcessorKwArgs,
         tmp_folder: None | Path | PathLike | str = None,
         token_filter: TokenCountFilter | None = None,
-        dictionary_sources: tuple[DictionaryReaderLike, ...] | None = None,
 ) -> PyDictionary:
     if not isinstance(dictionary_path, Path):
         dictionary_path = Path(dictionary_path)
-    if not dictionary_path.is_file():
+    if not dictionary_path.exists():
         print(f"Create dict at: {dictionary_path}")
-        if dictionary_sources is not None:
-            dictionary, _ = create_dictionary(
-                lang_a,
-                lang_b,
-                original_dictionaries_path,
-                processor_kwargs,
-                *dictionary_sources
-            )
-        else:
-            dictionary, _ = create_dictionary(
-                lang_a,
-                lang_b,
-                original_dictionaries_path,
-                processor_kwargs,
-                muse,
-                wikipedia,
-                omega,
-                tbx,
-                dict_cc,
-                ding_dict,
-                free_dict,
-                eurovoc,
-                iate,
-                ms_terms,
-                wiktionary,
-            )
-
-        dictionary.save(dictionary_path)
+        dictionary, _ = create_dictionary(
+            lang_a,
+            lang_b,
+            original_dictionary_path,
+            dictionary_path,
+            processor_kwargs,
+            # *dictionary_sources
+        )
     else:
         print("Loaded dict!")
         dictionary = PyDictionary.load(dictionary_path)

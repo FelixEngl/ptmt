@@ -18,7 +18,8 @@ from os import PathLike
 from pathlib import Path
 
 import jsonpickle
-from ldatranslate import PyDictionary, LanguageHint, PyDictionaryEntry
+from ldatranslate import PyDictionary, LanguageHint, LoadedMetadataEx
+from ldatranslate.ldatranslate import MetaField
 
 from ptmt.research.dirs import DataDirectory
 from ptmt.research.tmt1.toolkit.data_creator import TokenizedValue
@@ -35,7 +36,7 @@ def create_unstemm_dictionary(
     if path_to_dict.exists():
         return PyDictionary.load(path_to_dict)
     language = language if isinstance(language, str) else str(language)
-    new_dictionary = PyDictionary(str(language) + "_o", str(language) + "_p")
+    new_dictionary: PyDictionary = PyDictionary(str(language) + "_o", str(language) + "_p")
     source_file = source_file if isinstance(source_file, Path) else Path(source_file)
     filtered_words = defaultdict(lambda: defaultdict(lambda: 0))
     with source_file.open("r", buffering=1024 * 1024 * 200, encoding="UTF-8") as f:
@@ -44,11 +45,17 @@ def create_unstemm_dictionary(
             targ = data.entries[language]
             for o, p in zip(targ.origin, targ.tokenized):
                 filtered_words[o][p] += 1
+    # o = original word
+    # p = other word
     for o, value in filtered_words.items():
+        o: str
+        value: dict[str, int]
         p, ct = max(value.items(), key=operator.itemgetter(1))
-        entry = PyDictionaryEntry(o, p)
-        entry.set_meta_a_value(str(ct))
-        new_dictionary.add(entry)
+        p: str
+        new_dictionary.add(
+            (o, LoadedMetadataEx({MetaField.Unclassified: (f"ct#{ct}", 1)})),
+            (p, None)
+        )
     new_dictionary.save(path_to_dict)
     return new_dictionary
 

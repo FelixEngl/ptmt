@@ -135,7 +135,7 @@ def run_single(
         ndcg_kwargs: NDCGKwArgs | None,
         bar_plot_args: BarPlotKWArgs | None,
         line_plot_args: LinePlotKWArgs | None,
-        configs: typing.Iterable[TranslationConfig] | Callable[[], typing.Iterable[TranslationConfig]]
+        configs: typing.Collection[TranslationConfig] | Callable[[], typing.Collection[TranslationConfig]]
 ):
     print(f"Create for {marker}")
     lang_a = str(LanguageHint(lang_a))
@@ -246,7 +246,7 @@ def run_single(
     assert not math.isinf(best_baseline), "No best_baseline found!"
     assert not math.isinf(worst_non_baseline), "No worst_non_baseline found!"
 
-    targets = tuple(sorted({
+    targets: tuple[float|int, ...] = tuple(sorted({
         0,
         int((len(to_plot.ranking) - 1) / 2),
         int((len(to_plot.ranking) - 1) / 2) + 1,
@@ -424,7 +424,6 @@ _TestIdType = typing.Iterable[int] | float | Fraction | str | Path | os.PathLike
 
 class DictionaryKwArgs(TypedDict, total=True):
     name_suffix: str
-    dictionary_sources: tuple[DictionaryReaderLike, ...]
 
 
 def run_pipeline(
@@ -432,7 +431,7 @@ def run_pipeline(
         lang_b: LanguageHint | str,
         data_path: Path | PathLike | str,
         root_dir: Path | PathLike | str,
-        original_dictionaries_path: str | PathLike | Path,
+        original_dictionary_path: str | PathLike | Path,
         dictionary_file_name: str,
         mode: str,
         test_ids: _TestIdType | tuple[_TestIdType, int],
@@ -475,10 +474,8 @@ def run_pipeline(
         target_name = pipeline_kwargs["name_suffix"]
         if not target_name.startswith("_"):
             target_name = '_' + target_name
-        dictionary_sources = pipeline_kwargs["dictionary_sources"]
     else:
         target_name = ''
-        dictionary_sources= None
 
     for t in mode:
         match t:
@@ -507,7 +504,7 @@ def run_pipeline(
     dictionary = make_dictionary(
         lang_a,
         lang_b,
-        original_dictionaries_path,
+        original_dictionary_path,
         root_dir/dictionary_file_name,
         data_path,
         processed_phrase_data,
@@ -515,7 +512,6 @@ def run_pipeline(
         processor_kwargs,
         tmp_folder=tmp_folder,
         token_filter=token_filter,
-        dictionary_sources=dictionary_sources,
     )
 
     print("Created dict and data!")
@@ -574,23 +570,23 @@ def run_pipeline(
         )
 
     if docs_filtered is not None:
-        def _filter_a1(word: str, _: SolvedMetadata | None) -> bool:
+        def _filter_a1(word: str, _: LoadedMetadataEx | None) -> bool:
             if word.count(' ') > 1:
                 return False
             if any(x in word for x in "(){}[].,;:_-#+*/\\1234567890"):
                 return False
             return True
 
-        def _filter_a2(word: str, meta: SolvedMetadata | None) -> bool:
-            assoc = meta.associated_dictionaries
+        def _filter_a2(word: str, meta: LoadedMetadataEx | None) -> bool:
+            assoc = list(meta.associated_dictionaries())
             if not _filter_a1(word, meta):
                 return False
             if assoc is None or len(assoc) == 0:
                 return True
             if len(assoc) == 1:
-                return assoc[0] != "IATE" and assoc[0] != "ms_terms"
+                return assoc[0] != "iate" and assoc[0] != "ms_terms"
             if len(assoc) == 2:
-                return all(x == "IATE" or x == "ms_terms" for x in assoc)
+                return all(x == "iate" or x == "ms_terms" for x in assoc)
             return True
 
         args_copy = dict(args)
@@ -598,23 +594,23 @@ def run_pipeline(
         run_single("filtered_dict", docs_filtered, **args_copy)
 
     if docs_filtered_phrase is not None:
-        def _filter_a1(word: str, _: SolvedMetadata | None) -> bool:
+        def _filter_a1(word: str, _: LoadedMetadataEx | None) -> bool:
             if ' ' in word:
                 return False
             if any(x in word for x in "(){}[].,;:_-#+*/\\1234567890"):
                 return False
             return True
 
-        def _filter_a2(word: str, meta: SolvedMetadata | None) -> bool:
-            assoc = meta.associated_dictionaries
+        def _filter_a2(word: str, meta: LoadedMetadataEx | None) -> bool:
+            assoc = list(meta.associated_dictionaries())
             if not _filter_a1(word, meta):
                 return False
             if assoc is None or len(assoc) == 0:
                 return True
             if len(assoc) == 1:
-                return assoc[0] != "IATE" and assoc[0] != "ms_terms"
+                return assoc[0] != "iate" and assoc[0] != "ms_terms"
             if len(assoc) == 2:
-                return all(x == "IATE" or x == "ms_terms" for x in assoc)
+                return all(x == "iate" or x == "ms_terms" for x in assoc)
             return True
 
         args_copy = dict(args)
