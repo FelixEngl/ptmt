@@ -124,7 +124,7 @@ def run(
         1000,
         deepl,
         mark_baselines=True,
-        generate_Excel=True,
+        generate_Excel=False,
         ndcg_kwargs={
             "top_n_weigts": (3, 2, 1)
         },
