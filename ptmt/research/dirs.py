@@ -227,10 +227,21 @@ class LazyLoadingEntry:
         return self._coherences
 
 
+    def rm_translated_lda(self):
+        self.model_path.unlink(missing_ok=True)
+
+
+
+def sizeof_fmt(num, suffix="B"):
+    for unit in ("", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"):
+        if abs(num) < 1024.0:
+            return f"{num:3.1f}{unit}{suffix}"
+        num /= 1024.0
+    return f"{num:.1f}Yi{suffix}"
 
 
 class DataDirectory:
-    def __init__(self, root_dir: Path | str | os.PathLike = "./paper"):
+    def __init__(self, root_dir: Path | str | os.PathLike):
         if not isinstance(root_dir, Path):
             root_dir = Path(root_dir).absolute()
         root_dir.mkdir(parents=True, exist_ok=True)
@@ -240,6 +251,16 @@ class DataDirectory:
         self._lazy_cache = dict()
         self._corpus = dict()
         self._coherences = CoherencesDir(self.root_dir / "coherences")
+        self.finished_marker = root_dir / "finished.dummy"
+
+    def is_finished(self) -> bool:
+        return self.finished_marker.is_file()
+
+    def mark_as_finished(self):
+        self.finished_marker.touch()
+
+    def rm_is_finished(self):
+        self.finished_marker.unlink(missing_ok=True)
 
     def set_original_models(self, model: PyTopicModel | LDAModel | tuple[PyTopicModel | LDAModel, PyTopicModel | LDAModel] | None, model1: PyTopicModel | LDAModel | None = None):
         if model is None:
@@ -304,6 +325,9 @@ class DataDirectory:
     def load_original_rating(self) -> Rating:
         return jsonpickle.loads((self.root_dir / 'translation/ratings_original.json').read_text())
 
+    def translations_path(self) -> Path:
+        return self.root_dir / 'translation/translations'
+
     def load_single(self, model_id: str) -> LazyLoadingEntry | None:
         d = self.root_dir / 'translation/translations'
         d = d / model_id
@@ -337,7 +361,7 @@ class DataDirectory:
         return None
 
     def iter_all_translations(self, with_deepl: bool = True) -> typing.Iterator[LazyLoadingEntry]:
-        d = self.root_dir / 'translation/translations'
+        d = self.translations_path()
         if with_deepl and (deepl := self.deepl_if_exists()) is not None:
             yield deepl
         for value in d.iterdir():
@@ -350,4 +374,16 @@ class DataDirectory:
 
     def unstemm_path(self) -> Path:
         return self.root_dir / "revert_dict.dict"
+
+    def rm_translated_topic_models(self, *, print_delete_messages: bool = True):
+        deleted_count = 0
+        deleted_bytes = 0
+        for entry in self.iter_all_translations():
+            deleted_count += 1
+            deleted_bytes += entry.model_path.stat().st_size
+            entry.rm_translated_lda()
+        deleted_form = sizeof_fmt(deleted_bytes)
+        if print_delete_messages:
+            print(f"Deleted {deleted_count} files with {deleted_form}.")
+
 

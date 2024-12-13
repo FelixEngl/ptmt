@@ -15,6 +15,7 @@
 import json
 import math
 import os
+import shutil
 from os import PathLike
 from typing import TypedDict
 
@@ -25,6 +26,7 @@ from matplotlib import pyplot as plt
 
 from ptmt.dictionary_readers.v1.dictionaries import DictionaryReaderLike
 from ptmt.dictionary_readers.v1.dictionary_reader_declarations import *
+from ptmt.research.dirs import sizeof_fmt
 from ptmt.research.helpers.article_processor_creator import create_processor, PyAlignedArticleProcessorKwArgs
 from ptmt.research.helpers.chunking import chunk_by
 from ptmt.research.helpers.fonts import FontSizes
@@ -111,6 +113,12 @@ class _RunSingleKWArgs(TypedDict):
     bar_plot_args: BarPlotKWArgs | None
     line_plot_args: LinePlotKWArgs | None
     configs: typing.Iterable[TranslationConfig] | Callable[[], typing.Iterable[TranslationConfig]]
+    config_modifier: Callable[[TranslationConfig, PyTopicModel, PyDictionary], PyTranslationConfig] | None
+    clean_translation: bool
+    skip_if_finished_marker_set: bool
+
+
+
 
 def run_single(
         marker: str,
@@ -135,8 +143,17 @@ def run_single(
         ndcg_kwargs: NDCGKwArgs | None,
         bar_plot_args: BarPlotKWArgs | None,
         line_plot_args: LinePlotKWArgs | None,
-        configs: typing.Collection[TranslationConfig] | Callable[[], typing.Collection[TranslationConfig]]
+        configs: typing.Collection[TranslationConfig] | Callable[[], typing.Collection[TranslationConfig]],
+        config_modifier: Callable[[TranslationConfig, PyTopicModel, PyDictionary], PyTranslationConfig] | None,
+        clean_translation: bool,
+        skip_if_finished_marker_set: bool,
 ):
+    if skip_if_finished_marker_set and data_dir.is_finished():
+        print(f"{data_dir.root_dir} is already finished.")
+        return
+    else:
+        data_dir.rm_is_finished()
+    
     print(f"Create for {marker}")
     lang_a = str(LanguageHint(lang_a))
     lang_b = str(LanguageHint(lang_b))
@@ -179,7 +196,8 @@ def run_single(
         test,
         limit,
         filters,
-        configs=configs
+        configs=configs,
+        config_modifier=config_modifier
     )
     print("Finished translating models")
 
@@ -405,18 +423,10 @@ def run_single(
                     print("------", file=f)
 
 
+    if clean_translation:
+        data_dir.rm_translated_topic_models()
 
-
-    # data_dir.load_original_py_model().show_top(5)
-    #
-    #
-    # for config in data_dir.iter_all_translations(True):
-    #     if config.name in __targ or config.name+"*" in __targ:
-    #         print(f'---------- {config.name} ----------')
-    #         config.model.show_top(5)
-    #         print(f'-----------------------------------\n\n')
-    # print(f'-----------------------------------\n\n\n\n')
-
+    data_dir.mark_as_finished()
 
 
 _TestIdType = typing.Iterable[int] | float | Fraction | str | Path | os.PathLike
@@ -426,7 +436,9 @@ class DictionaryKwArgs(TypedDict, total=True):
     name_suffix: str
 
 
+
 def run_pipeline(
+        experiment_name: str,
         lang_a: LanguageHint | str,
         lang_b: LanguageHint | str,
         data_path: Path | PathLike | str,
@@ -448,8 +460,41 @@ def run_pipeline(
         bar_plot_args: BarPlotKWArgs | None = None,
         line_plot_args: LinePlotKWArgs | None = None,
         pipeline_kwargs: DictionaryKwArgs | None = None,
-        configs: typing.Iterable[TranslationConfig] | Callable[[], typing.Iterable[TranslationConfig]] | None = None
+        configs: typing.Iterable[TranslationConfig] | Callable[[], typing.Iterable[TranslationConfig]] | None = None,
+        config_modifier: Callable[[TranslationConfig, PyTopicModel, PyDictionary], PyTranslationConfig] | None = None,
+        clean_translations: bool = False,
+        skip_if_finished_marker_set: bool = True
 ):
+    """
+
+    :param skip_if_finished_marker_set:
+    :param lang_a:
+    :param lang_b:
+    :param data_path:
+    :param root_dir:
+    :param original_dictionary_path:
+    :param dictionary_file_name:
+    :param mode:
+    :param test_ids:
+    :param processor_kwargs:
+    :param token_filter:
+    :param tmp_folder:
+    :param iters:
+    :param deepl:
+    :param translate_mode:
+    :param mark_baselines:
+    :param generate_Excel:
+    :param coocurences_kwargs:
+    :param ndcg_kwargs:
+    :param bar_plot_args:
+    :param line_plot_args:
+    :param pipeline_kwargs:
+    :param configs:
+    :param config_modifier: Allows to modify the config before building it.
+    :param clean_translations:
+    :return:
+    """
+
     if isinstance(lang_a, str):
         lang_a = str(LanguageHint(lang_a))
     else:
@@ -481,19 +526,19 @@ def run_pipeline(
         match t:
             case "p":
                 processed_phrase_data = root_dir / "processed_data_phrases.bulkjson"
-                docs_phrases = DataDirectory(root_dir / f"paper_phrases{target_name}")
+                docs_phrases = DataDirectory(root_dir / (experiment_name or ".") / f"paper_phrases{target_name}")
             case "n":
                 if processed_data is None:
                     processed_data = root_dir / "processed_data.bulkjson"
-                docs = DataDirectory(root_dir / f"paper_no_phrases{target_name}")
+                docs = DataDirectory(root_dir / (experiment_name or ".") / f"paper_no_phrases{target_name}")
             case "f":
                 if processed_data is None:
                     processed_data = root_dir / "processed_data.bulkjson"
-                docs_filtered = DataDirectory(root_dir / f"paper_filtered_dic{target_name}")
+                docs_filtered = DataDirectory(root_dir / (experiment_name or ".") / f"paper_filtered_dic{target_name}")
             case "m":
                 if processed_data is None:
                     processed_data = root_dir / "processed_data.bulkjson"
-                docs_filtered_phrase = DataDirectory(root_dir / f"paper_filtered_dic_no_phrases{target_name}")
+                docs_filtered_phrase = DataDirectory(root_dir / (experiment_name or ".") / f"paper_filtered_dic_no_phrases{target_name}")
             case _:
                 raise ValueError(f"{t} not supported")
 
@@ -559,7 +604,10 @@ def run_pipeline(
         coocurences_kwargs=coocurences_kwargs,
         stop_words=None,
         filters=None,
-        configs=configs
+        configs=configs,
+        config_modifier=config_modifier,
+        clean_translation=clean_translations,
+        skip_if_finished_marker_set=skip_if_finished_marker_set
     )
 
     if docs is not None:

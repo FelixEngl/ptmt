@@ -11,15 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import typing
 from os import PathLike
 from pathlib import Path
+from typing import Callable
 
-from ldatranslate import PyStemmingAlgorithm, TokenCountFilter
+from ldatranslate import PyStemmingAlgorithm, TokenCountFilter, PyTopicModel, PyDictionary, PyTranslationConfig
 from matplotlib.pyplot import colormaps
 
 from ptmt.research.helpers.article_processor_creator import PyAlignedArticleProcessorKwArgs
 from ptmt.research.plotting.generate_plots import MPLColor
+from ptmt.research.protocols import TranslationConfig
 from ptmt.research.tmt1.pipeline import run_pipeline, LinePlotKWArgs, BarPlotKWArgs, CoocurrencesKwArgs
 from ptmt.research.tmt1.toolkit.test_ids import test_ids
 from ptmt.toolkit.stopwords import get_stop_words
@@ -75,11 +77,17 @@ def color_provider3(text: str) -> MPLColor | None:
 
 
 def run(
+        experiment_name: str,
         target_folder: Path | PathLike | str,
         path_to_original_dictionary: Path | PathLike | str,
         path_to_raw_data: Path | PathLike | str | None = None,
         temp_folder: Path | PathLike | str | None = None,
-        deepl: bool = False
+        deepl: bool = False,
+        configs: typing.Iterable[TranslationConfig] | Callable[[], typing.Iterable[TranslationConfig]] | None = None,
+        config_modifier: Callable[[TranslationConfig, PyTopicModel, PyDictionary], PyTranslationConfig] | None = None,
+        highlight: tuple[str,...] | None = None,
+        clean_translations: bool = False,
+        skip_if_finished_marker_set: bool = True,
 ):
     target_folder = target_folder if isinstance(target_folder, Path) else Path(target_folder)
 
@@ -109,7 +117,11 @@ def run(
 
         print("Finished preprocessing data.")
 
+    if highlight is None:
+        highlight = ("P5", "G5", "P3", "M3", "C5*", "B3*")
+
     run_pipeline(
+        experiment_name,
         "en",
         "de",
         path_to_extracted_data,
@@ -132,13 +144,17 @@ def run(
             colors=colormaps.get("prism")
         ),
         bar_plot_args=BarPlotKWArgs(
-            highlight=("P5", "G5", "P3", "M3", "C5*", "B3*"),
+            highlight= highlight,
             label_rotation=270,
             y_label_rotation=270,
             y_label_labelpad=20,
             label_colors=color_provider3
         ),
-        coocurences_kwargs=False
+        coocurences_kwargs=False,
+        configs = configs,
+        config_modifier=config_modifier,
+        clean_translations=clean_translations,
+        skip_if_finished_marker_set=skip_if_finished_marker_set
     )
 
 

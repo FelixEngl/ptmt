@@ -25,6 +25,7 @@ from ldatranslate import PyDictionary, translate_topic_model, LoadedMetadataEx, 
 from ptmt.research.dirs import DataDirectory
 from ptmt.research.lda_model import create_ratings
 from ptmt.research.protocols import TranslationConfig
+from ptmt.research.tmt1.configs import create_configs
 from ptmt.research.tmt1.toolkit.data_creator import TokenizedValue
 
 _DICTIONARY_FILTER = Callable[[str, LoadedMetadataEx | None], bool]
@@ -45,6 +46,16 @@ def _filter_iate_and_msterms_wrapper(f: Callable[[str, LoadedMetadataEx | None],
     return wrapper
 
 
+class ExtendedConfigCreator:
+    def __init__(
+            self,
+            configs: typing.Collection[TranslationConfig] | Callable[[], typing.Collection[TranslationConfig]] | None = None
+    ):
+        self.configs = configs or create_configs
+
+
+
+
 def translate_models(
         lang_a: str,
         lang_b: str,
@@ -53,7 +64,8 @@ def translate_models(
         test_data: Path | PathLike | str,
         limit: int | None,
         filters: tuple[SINGLE_FILTER, SINGLE_FILTER] | None,
-        configs: typing.Collection[TranslationConfig] | Callable[[], typing.Collection[TranslationConfig]]
+        configs: typing.Collection[TranslationConfig] | Callable[[], typing.Collection[TranslationConfig]],
+        config_modifier: Callable[[TranslationConfig, ldatranslate.PyTopicModel, PyDictionary], ldatranslate.PyTranslationConfig] | None
 ):
     if callable(configs):
         my_configs = configs()
@@ -71,7 +83,6 @@ def translate_models(
     if finished_count == len(my_configs):
         print(f"Everything is already translated!")
         return
-
 
     if filters is None:
         def _default(_word: str, _meta: LoadedMetadataEx | None) -> bool:
@@ -130,13 +141,16 @@ def translate_models(
             print(f"{config.config_id} already translated. Skipping!")
             continue
 
-
         config.alpha = original_model.alpha
-        cfg = config.to_translation_config()
         if config.limited_dictionary:
             d = d2
         else:
             d = d1
+
+        if config_modifier is not None:
+            cfg = config_modifier(config, topic_model, d)
+        else:
+            cfg = config.to_translation_config()
 
         translated = translate_topic_model(topic_model, d, config.voting, cfg)
 
