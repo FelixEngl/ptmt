@@ -241,7 +241,7 @@ def sizeof_fmt(num, suffix="B"):
 
 
 class DataDirectory:
-    def __init__(self, root_dir: Path | str | os.PathLike):
+    def __init__(self, root_dir: Path | str | os.PathLike, global_model_dir: Path | os.PathLike | str | None = None,):
         if not isinstance(root_dir, Path):
             root_dir = Path(root_dir).absolute()
         root_dir.mkdir(parents=True, exist_ok=True)
@@ -252,6 +252,7 @@ class DataDirectory:
         self._corpus = dict()
         self._coherences = CoherencesDir(self.root_dir / "coherences")
         self.finished_marker = root_dir / "finished.dummy"
+        self.global_model_dir = global_model_dir
 
     def is_finished(self) -> bool:
         return self.finished_marker.is_file()
@@ -261,6 +262,12 @@ class DataDirectory:
 
     def rm_is_finished(self):
         self.finished_marker.unlink(missing_ok=True)
+
+    @property
+    def shareable_paths(self):
+        if self.global_model_dir is not None:
+            return self.global_model_dir
+        return self.root_dir
 
     def set_original_models(self, model: PyTopicModel | LDAModel | tuple[PyTopicModel | LDAModel, PyTopicModel | LDAModel] | None, model1: PyTopicModel | LDAModel | None = None):
         if model is None:
@@ -282,7 +289,7 @@ class DataDirectory:
 
     @property
     def original_model_paths(self) -> tuple[Path, Path]:
-        return self.root_dir / "lda_model.tomotopy.bin", self.root_dir / "lda_model.bin"
+        return self.shareable_paths / "lda_model.tomotopy.bin", self.shareable_paths / "lda_model.bin"
 
     @property
     def coherences(self) -> CoherencesDir:
@@ -303,7 +310,7 @@ class DataDirectory:
 
 
     def corpus_path(self, target_lang: str) -> Path:
-        root = self.root_dir / "corpus"
+        root = self.shareable_paths / "corpus"
         root.mkdir(parents=True, exist_ok=True)
         return root / (target_lang + ".bin")
 
@@ -372,8 +379,6 @@ class DataDirectory:
                 self._lazy_cache[value] = n
                 yield n
 
-    def unstemm_path(self) -> Path:
-        return self.root_dir / "revert_dict.dict"
 
     def rm_translated_topic_models(self, *, print_delete_messages: bool = True):
         deleted_count = 0

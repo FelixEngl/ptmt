@@ -21,6 +21,7 @@ from typing import Callable
 import jsonpickle
 import ldatranslate
 from ldatranslate import PyDictionary, translate_topic_model, LoadedMetadataEx, MetaField
+from ldatranslate.ldatranslate import PyNGramStatistics
 
 from ptmt.research.dirs import DataDirectory
 from ptmt.research.lda_model import create_ratings
@@ -57,15 +58,16 @@ class ExtendedConfigCreator:
 
 
 def translate_models(
-        lang_a: str,
-        lang_b: str,
-        out_dir: DataDirectory,
-        dictionary: PyDictionary | Path | PathLike | str,
-        test_data: Path | PathLike | str,
-        limit: int | None,
-        filters: tuple[SINGLE_FILTER, SINGLE_FILTER] | None,
-        configs: typing.Collection[TranslationConfig] | Callable[[], typing.Collection[TranslationConfig]],
-        config_modifier: Callable[[TranslationConfig, ldatranslate.PyTopicModel, PyDictionary], ldatranslate.PyTranslationConfig] | None
+    lang_a: str,
+    lang_b: str,
+    out_dir: DataDirectory,
+    dictionary: PyDictionary | Path | PathLike | str,
+    ngrams: PyNGramStatistics | None,
+    test_data: Path | PathLike | str,
+    limit: int | None,
+    filters: tuple[SINGLE_FILTER, SINGLE_FILTER] | None,
+    configs: typing.Collection[TranslationConfig] | Callable[[], typing.Collection[TranslationConfig]],
+    config_modifier: Callable[[TranslationConfig, ldatranslate.PyTopicModel, PyDictionary], ldatranslate.PyTranslationConfig] | None
 ):
     if callable(configs):
         my_configs = configs()
@@ -152,7 +154,7 @@ def translate_models(
         else:
             cfg = config.to_translation_config()
 
-        translated = translate_topic_model(topic_model, d, config.voting, cfg)
+        translated = translate_topic_model(topic_model, d, config.voting, cfg, None, None, ngrams)
 
         print("Save config json.")
         config_pickle = jsonpickle.dumps(config)

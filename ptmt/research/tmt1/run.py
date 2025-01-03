@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Callable
 
 from ldatranslate import PyStemmingAlgorithm, TokenCountFilter, PyTopicModel, PyDictionary, PyTranslationConfig
+from ldatranslate.ldatranslate import PyNGramStatistics
 from matplotlib.pyplot import colormaps
 
 from ptmt.research.helpers.article_processor_creator import PyAlignedArticleProcessorKwArgs
@@ -88,6 +89,8 @@ def run(
         highlight: tuple[str,...] | None = None,
         clean_translations: bool = False,
         skip_if_finished_marker_set: bool = True,
+        global_model_dir: Path | PathLike | str | None = None,
+        ngrams: Path | PathLike | str | None | PyNGramStatistics = None,
 ):
     target_folder = target_folder if isinstance(target_folder, Path) else Path(target_folder)
 
@@ -117,15 +120,15 @@ def run(
 
         print("Finished preprocessing data.")
 
-    if highlight is None:
-        highlight = ("P5", "G5", "P3", "M3", "C5*", "B3*")
+    # if highlight is None:
+    #     highlight = ("P5", "G5", "P3", "M3", "C5*", "B3*")
 
     run_pipeline(
         experiment_name,
         "en",
         "de",
         path_to_extracted_data,
-        target_folder,
+        target_folder, # root_dir
         path_to_original_dictionary,
         "my_dictionary.dat.zst",
         "f",
@@ -154,7 +157,9 @@ def run(
         configs = configs,
         config_modifier=config_modifier,
         clean_translations=clean_translations,
-        skip_if_finished_marker_set=skip_if_finished_marker_set
+        skip_if_finished_marker_set=skip_if_finished_marker_set,
+        global_model_dir=global_model_dir,
+        ngram=ngrams
     )
 
 

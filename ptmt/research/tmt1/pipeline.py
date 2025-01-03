@@ -116,6 +116,7 @@ class _RunSingleKWArgs(TypedDict):
     config_modifier: Callable[[TranslationConfig, PyTopicModel, PyDictionary], PyTranslationConfig] | None
     clean_translation: bool
     skip_if_finished_marker_set: bool
+    ngrams: PyNGramStatistics | None
 
 
 
@@ -147,6 +148,7 @@ def run_single(
         config_modifier: Callable[[TranslationConfig, PyTopicModel, PyDictionary], PyTranslationConfig] | None,
         clean_translation: bool,
         skip_if_finished_marker_set: bool,
+        ngrams: PyNGramStatistics | None,
 ):
     if skip_if_finished_marker_set and data_dir.is_finished():
         print(f"{data_dir.root_dir} is already finished.")
@@ -166,7 +168,7 @@ def run_single(
 
     train, test = create_train_data(
         inp,
-        data_dir.root_dir,
+        data_dir.shareable_paths,
         test_ids,
         token_filter,
         (processor, original_data_path),
@@ -193,11 +195,12 @@ def run_single(
         lang_b,
         data_dir,
         dictionary,
+        ngrams,
         test,
         limit,
         filters,
         configs=configs,
-        config_modifier=config_modifier
+        config_modifier=config_modifier,
     )
     print("Finished translating models")
 
@@ -277,7 +280,8 @@ def run_single(
 
     if bar_plot_args is None:
         bar_plot_args = BarPlotKWArgs()
-
+    if bar_plot_args.get('highlight', None) is None:
+        bar_plot_args['highlight'] = targets
     bar_plot_args.setdefault('highlight', targets)
     bar_plot_args.setdefault('width', 1.0)
     bar_plot_args.setdefault('edgecolor', 'black')
@@ -463,7 +467,9 @@ def run_pipeline(
         configs: typing.Iterable[TranslationConfig] | Callable[[], typing.Iterable[TranslationConfig]] | None = None,
         config_modifier: Callable[[TranslationConfig, PyTopicModel, PyDictionary], PyTranslationConfig] | None = None,
         clean_translations: bool = False,
-        skip_if_finished_marker_set: bool = True
+        skip_if_finished_marker_set: bool = True,
+        global_model_dir: Path | PathLike | str | None = None,
+        ngram: Path | PathLike | str | None | PyNGramStatistics = None,
 ):
     """
 
@@ -492,6 +498,8 @@ def run_pipeline(
     :param configs:
     :param config_modifier: Allows to modify the config before building it.
     :param clean_translations:
+    :param global_model:
+    :param ngram:
     :return:
     """
 
@@ -514,6 +522,12 @@ def run_pipeline(
     root_dir = root_dir if isinstance(root_dir, Path) else Path(root_dir)
     root_dir.mkdir(parents=True, exist_ok=True)
 
+    if global_model_dir is None:
+        big_data_gen_path = root_dir
+    else:
+        global_model_dir = Path(global_model_dir)
+        big_data_gen_path = global_model_dir
+
     processed_phrase_data, docs_phrases, processed_data, docs, docs_filtered, docs_filtered_phrase = None, None, None, None, None, None
     if pipeline_kwargs is not None:
         target_name = pipeline_kwargs["name_suffix"]
@@ -525,22 +539,25 @@ def run_pipeline(
     for t in mode:
         match t:
             case "p":
-                processed_phrase_data = root_dir / "processed_data_phrases.bulkjson"
-                docs_phrases = DataDirectory(root_dir / (experiment_name or ".") / f"paper_phrases{target_name}")
+                processed_phrase_data = big_data_gen_path / "processed_data_phrases.bulkjson"
+                docs_phrases = DataDirectory(root_dir / (experiment_name or ".") / f"paper_phrases{target_name}", global_model_dir)
             case "n":
                 if processed_data is None:
-                    processed_data = root_dir / "processed_data.bulkjson"
-                docs = DataDirectory(root_dir / (experiment_name or ".") / f"paper_no_phrases{target_name}")
+                    processed_data = big_data_gen_path / "processed_data.bulkjson"
+                docs = DataDirectory(root_dir / (experiment_name or ".") / f"paper_no_phrases{target_name}", global_model_dir)
             case "f":
                 if processed_data is None:
-                    processed_data = root_dir / "processed_data.bulkjson"
-                docs_filtered = DataDirectory(root_dir / (experiment_name or ".") / f"paper_filtered_dic{target_name}")
+                    processed_data = big_data_gen_path / "processed_data.bulkjson"
+                docs_filtered = DataDirectory(root_dir / (experiment_name or ".") / f"paper_filtered_dic{target_name}", global_model_dir)
             case "m":
                 if processed_data is None:
-                    processed_data = root_dir / "processed_data.bulkjson"
-                docs_filtered_phrase = DataDirectory(root_dir / (experiment_name or ".") / f"paper_filtered_dic_no_phrases{target_name}")
+                    processed_data = big_data_gen_path / "processed_data.bulkjson"
+                docs_filtered_phrase = DataDirectory(root_dir / (experiment_name or ".") / f"paper_filtered_dic_no_phrases{target_name}", global_model_dir)
             case _:
                 raise ValueError(f"{t} not supported")
+
+    if big_data_gen_path is not None:
+        big_data_gen_path.mkdir(exist_ok=True, parents=True)
 
     root_dir.mkdir(exist_ok=True, parents=True)
 
@@ -550,7 +567,7 @@ def run_pipeline(
         lang_a,
         lang_b,
         original_dictionary_path,
-        root_dir/dictionary_file_name,
+        big_data_gen_path/dictionary_file_name,
         data_path,
         processed_phrase_data,
         processed_data,
@@ -558,6 +575,14 @@ def run_pipeline(
         tmp_folder=tmp_folder,
         token_filter=token_filter,
     )
+
+    if ngram is not None:
+        if isinstance(ngram, PyNGramStatistics):
+            ngrams = ngram
+        else:
+            ngrams = PyNGramStatistics.load(ngram)
+    else:
+        ngrams = None
 
     print("Created dict and data!")
 
@@ -607,7 +632,8 @@ def run_pipeline(
         configs=configs,
         config_modifier=config_modifier,
         clean_translation=clean_translations,
-        skip_if_finished_marker_set=skip_if_finished_marker_set
+        skip_if_finished_marker_set=skip_if_finished_marker_set,
+        ngrams=ngrams
     )
 
     if docs is not None:

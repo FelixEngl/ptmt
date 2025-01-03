@@ -17,7 +17,15 @@ import typing
 from ptmt.research.plotting.plot_data import PlotDataEntry
 
 
-def resolve_highlight_to_idx(plot_data: list[PlotDataEntry], highlight: typing.Iterable[str | int]) -> list[int]:
+def resolve_highlight_to_idx(plot_data: list[PlotDataEntry], highlight: typing.Iterable[str | int] | typing.Callable[[list[PlotDataEntry]], list[PlotDataEntry]]) -> list[int]:
+    if callable(highlight):
+        # noinspection PyBroadException
+        try:
+            extracted_highlights = highlight(plot_data)
+            highlight = [x.name for x in extracted_highlights]
+        except Exception:
+            pass
+
     plot_data = list(enumerate(plot_data))
     result = []
     for h in highlight:
@@ -28,7 +36,14 @@ def resolve_highlight_to_idx(plot_data: list[PlotDataEntry], highlight: typing.I
     return result
 
 
-def resolve_highlight(plot_data: list[PlotDataEntry], highlight: typing.Iterable[str | int]) -> list[str]:
+def resolve_highlight(plot_data: list[PlotDataEntry], highlight: typing.Iterable[str | int] | typing.Callable[[list[PlotDataEntry]], list[PlotDataEntry]]) -> list[str]:
+    if callable(highlight):
+        # noinspection PyBroadException
+        try:
+            extracted_highlights = highlight(plot_data)
+            return [x.name for x in extracted_highlights]
+        except Exception:
+            pass
     result = []
     for h in highlight:
         if isinstance(h, str):

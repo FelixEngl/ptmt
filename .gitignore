@@ -204,5 +204,6 @@ fabric.properties
 /data/dictionaries/Microsoft TermCollection/*.tbx
 /data/dictionaries/MUSE/*.gz
 /data/dictionaries/Wiktionary/transformed
+/data/ngrams
 /tmt
 /data/experiment*
