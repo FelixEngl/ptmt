@@ -94,9 +94,10 @@ def create_run(
         horizontal: Optional[HorizontalKwargs] = None,
         ngram: Optional[NGramBoostKwargs] = None,
         clean_translations: bool = False,
-) -> RunKwargs:
+) -> tuple[dict[str, typing.Any], RunKwargs]:
     if vertical is not None:
         name += "_v_"
+        name += str(hash(tuple(sorted(vertical.items(), key=lambda item: item[0]))))
 
         vertical = create_vertical_factory(
             create_basic_boost_factory(
@@ -106,7 +107,7 @@ def create_run(
         )
     if horizontal is not None:
         name += "_h_"
-
+        name += str(hash(tuple(sorted(horizontal.items(), key=lambda item: item[0]))))
         horizontal = create_horizontal_factory(
             create_basic_boost_factory(
                 **horizontal,
@@ -116,12 +117,22 @@ def create_run(
 
     if ngram is not None:
         name += "_n_"
+        name += str(hash(tuple([(value[0], tuple([x for x in value[1].items()])) for value in sorted(ngram.items(), key=lambda item: item[0])])))
 
+
+        name += str(hash(tuple()))
         ngram = create_ngram_language_boost_factory(
             **ngram,
         )
 
-    return RunKwargs(
+    targ = {
+        "name": name,
+        "vertical": vertical,
+        "horizontal": horizontal,
+        "ngram": ngram,
+    }
+
+    return targ, RunKwargs(
         experiment_name=name,
         target_folder=f"../data/{identifier}",
         path_to_original_dictionary=f"../data/final_dict/{dictionary_file_name}.dat.zst",
@@ -139,87 +150,7 @@ def create_run(
 
 if __name__ == '__main__':
     """The experiments for the paper 'TMT: A Simple Way to Translate Topic Models Using Dictionaries'."""
-
-    print(FDivergence.Hellinger)
-    print(BoostNorm.Off)
-
-    exit(0)
     configs = [
-        # create_run(
-        #     "d3",
-        #     "experiment3",
-        #     "dictionary_20241130_proc3",
-        #     horizontal={
-        #         "divergence": FDivergence.KL,
-        #     }
-        # ),
-        # create_run(
-        #     "d3",
-        #     "experiment3",
-        #     "dictionary_20241130_proc3",
-        #     horizontal={
-        #         "divergence": FDivergence.KL,
-        #         "mean": MeanMethod.GeometricMean,
-        #     }
-        # ),
-        #
-        #
-        # create_run(
-        #     "d3",
-        #     "experiment3",
-        #     "dictionary_20241130_proc3",
-        #     horizontal={
-        #         "divergence": FDivergence.Bhattacharyya,
-        #     }
-        # ),
-        # create_run(
-        #     "d3",
-        #     "experiment3",
-        #     "dictionary_20241130_proc3",
-        #     horizontal={
-        #         "divergence": FDivergence.Bhattacharyya,
-        #         "mean": MeanMethod.GeometricMean,
-        #     }
-        # ),
-        #
-        #
-        # create_run(
-        #     "d3",
-        #     "experiment4",
-        #     "dictionary_20241130_proc4",
-        #     horizontal={
-        #         "divergence": FDivergence.KL,
-        #     }
-        # ),
-        # create_run(
-        #     "d3",
-        #     "experiment4",
-        #     "dictionary_20241130_proc4",
-        #     horizontal={
-        #         "divergence": FDivergence.Bhattacharyya,
-        #     }
-        # ),
-        # create_run(
-        #     "d3",
-        #     "experiment4",
-        #     "dictionary_20241130_proc4",
-        #     horizontal={
-        #         "divergence": FDivergence.KL,
-        #         "mean": MeanMethod.GeometricMean,
-        #     }
-        # ),
-        # create_run(
-        #     "d3",
-        #     "experiment4",
-        #     "dictionary_20241130_proc4",
-        #     horizontal={
-        #         "divergence": FDivergence.Bhattacharyya,
-        #         "mean": MeanMethod.GeometricMean,
-        #     }
-        # ),
-
-
-        # # HERE WITH VERT
         create_run(
             "v3",
             "experiment4",
@@ -235,67 +166,16 @@ if __name__ == '__main__':
             vertical={
                 "divergence": FDivergence.Hellinger,
                 "score_mod": ScoreModifierCalculator.WeightedSum,
-                "transform": BoostNorm.Off,
+                "norm": BoostNorm.Off,
                 "factor": 6,
             },
             clean_translations=True
         ),
-
-        # create_run(
-        #     "v3",
-        #     "experiment4",
-        #     "dictionary_20241130_proc4",
-        #     horizontal={
-        #         "divergence": FDivergence.Bhattacharyya,
-        #         "factor": 1.5,
-        #         "score_mod": ScoreModifierCalculator.Max,
-        #         "mean": MeanMethod.LinearWeightedGeometricMean,
-        #         "h_alpha": 0.1,
-        #     },
-        #     vertical={
-        #         "divergence": FDivergence.KL,
-        #         "score_mod": ScoreModifierCalculator.WeightedSum,
-        #         "transform": BoostNorm.Off,
-        #         "factor": 1.0,
-        #     },
-        #     clean_translations=True
-        # ),
-        # create_run(
-        #     "v3",
-        #     "experiment3",
-        #     "dictionary_20241130_proc3",
-        #     horizontal={
-        #         "divergence": FDivergence.Bhattacharyya,
-        #     },
-        #     vertical={
-        #         "divergence": FDivergence.KL
-        #     }
-        # ),
-        # create_run(
-        #     "v3",
-        #     "experiment4",
-        #     "dictionary_20241130_proc4",
-        #     horizontal={
-        #         "divergence": FDivergence.KL,
-        #     },
-        #     vertical={
-        #         "divergence": FDivergence.KL
-        #     }
-        # ),
-        # create_run(
-        #     "v3",
-        #     "experiment4",
-        #     "dictionary_20241130_proc4",
-        #     horizontal={
-        #         "divergence": FDivergence.Bhattacharyya,
-        #     },
-        #     vertical={
-        #         "divergence": FDivergence.KL
-        #     }
-        # ),
     ]
 
-    for i, cfg in enumerate(configs):
+    for i, info_and_cfg in enumerate(configs):
+        info, cfg = info_and_cfg
         print(f"Run {i+1}/{len(configs)}")
         print(f"{cfg}")
+
         run(**cfg)
