@@ -62,7 +62,7 @@ def translate_models(
     lang_b: str,
     out_dir: DataDirectory,
     dictionary: PyDictionary | Path | PathLike | str,
-    ngrams: PyNGramStatistics | None,
+    ngram_statistics: PyNGramStatistics | None,
     test_data: Path | PathLike | str,
     limit: int | None,
     filters: tuple[SINGLE_FILTER, SINGLE_FILTER] | None,
@@ -154,7 +154,7 @@ def translate_models(
         else:
             cfg = config.to_translation_config()
 
-        translated = translate_topic_model(topic_model, d, config.voting, cfg, None, None, ngrams)
+        translated = translate_topic_model(topic_model, d, config.voting, cfg, None, None, ngram_statistics)
 
         print("Save config json.")
         config_pickle = jsonpickle.dumps(config)

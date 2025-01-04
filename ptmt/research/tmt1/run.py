@@ -77,6 +77,20 @@ def color_provider3(text: str) -> MPLColor | None:
     return None
 
 
+
+class RunKwargs(typing.TypedDict):
+    experiment_name: str
+    target_folder: Path | PathLike | str
+    path_to_original_dictionary: Path | PathLike | str
+    path_to_raw_data: typing.NotRequired[Path | PathLike | str]
+    temp_folder: typing.NotRequired[Path | PathLike | str]
+    config_modifier: typing.NotRequired[typing.Callable[[TranslationConfig, PyTopicModel, PyDictionary], PyTranslationConfig]]
+    clean_translations: typing.NotRequired[bool]
+    skip_if_finished_marker_set: typing.NotRequired[bool]
+    global_model_dir: typing.NotRequired[Path | PathLike | str]
+    ngram_statistics: typing.NotRequired[Path | PathLike | str | None | PyNGramStatistics]
+
+
 def run(
         experiment_name: str,
         target_folder: Path | PathLike | str,
@@ -90,7 +104,7 @@ def run(
         clean_translations: bool = False,
         skip_if_finished_marker_set: bool = True,
         global_model_dir: Path | PathLike | str | None = None,
-        ngrams: Path | PathLike | str | None | PyNGramStatistics = None,
+        ngram_statistics: Path | PathLike | str | None | PyNGramStatistics = None,
 ):
     target_folder = target_folder if isinstance(target_folder, Path) else Path(target_folder)
 
@@ -159,7 +173,7 @@ def run(
         clean_translations=clean_translations,
         skip_if_finished_marker_set=skip_if_finished_marker_set,
         global_model_dir=global_model_dir,
-        ngram=ngrams
+        ngram_statistics=ngram_statistics
     )
 
 

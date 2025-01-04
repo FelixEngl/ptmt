@@ -116,7 +116,7 @@ class _RunSingleKWArgs(TypedDict):
     config_modifier: Callable[[TranslationConfig, PyTopicModel, PyDictionary], PyTranslationConfig] | None
     clean_translation: bool
     skip_if_finished_marker_set: bool
-    ngrams: PyNGramStatistics | None
+    ngram_statistics: PyNGramStatistics | None
 
 
 
@@ -148,7 +148,7 @@ def run_single(
         config_modifier: Callable[[TranslationConfig, PyTopicModel, PyDictionary], PyTranslationConfig] | None,
         clean_translation: bool,
         skip_if_finished_marker_set: bool,
-        ngrams: PyNGramStatistics | None,
+        ngram_statistics: PyNGramStatistics | None,
 ):
     if skip_if_finished_marker_set and data_dir.is_finished():
         print(f"{data_dir.root_dir} is already finished.")
@@ -195,7 +195,7 @@ def run_single(
         lang_b,
         data_dir,
         dictionary,
-        ngrams,
+        ngram_statistics,
         test,
         limit,
         filters,
@@ -469,7 +469,7 @@ def run_pipeline(
         clean_translations: bool = False,
         skip_if_finished_marker_set: bool = True,
         global_model_dir: Path | PathLike | str | None = None,
-        ngram: Path | PathLike | str | None | PyNGramStatistics = None,
+        ngram_statistics: Path | PathLike | str | None | PyNGramStatistics = None,
 ):
     """
 
@@ -499,7 +499,7 @@ def run_pipeline(
     :param config_modifier: Allows to modify the config before building it.
     :param clean_translations:
     :param global_model:
-    :param ngram:
+    :param ngram_statistics:
     :return:
     """
 
@@ -576,13 +576,13 @@ def run_pipeline(
         token_filter=token_filter,
     )
 
-    if ngram is not None:
-        if isinstance(ngram, PyNGramStatistics):
-            ngrams = ngram
+    if ngram_statistics is not None:
+        if isinstance(ngram_statistics, PyNGramStatistics):
+            ngram_statistics = ngram_statistics
         else:
-            ngrams = PyNGramStatistics.load(ngram)
+            ngram_statistics = PyNGramStatistics.load(ngram_statistics)
     else:
-        ngrams = None
+        ngram_statistics = None
 
     print("Created dict and data!")
 
@@ -633,7 +633,7 @@ def run_pipeline(
         config_modifier=config_modifier,
         clean_translation=clean_translations,
         skip_if_finished_marker_set=skip_if_finished_marker_set,
-        ngrams=ngrams
+        ngram_statistics=ngram_statistics
     )
 
     if docs is not None:
