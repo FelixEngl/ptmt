@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import Callable
 
 from ptmt.experiment2_support.functions import *
 from ptmt.research.protocols import TranslationConfig
@@ -28,6 +29,7 @@ def create_run(
         horizontal: Optional[HorizontalKwargs] = None,
         ngram: Optional[NGramBoostKwargs] = None,
         clean_translations: bool = False,
+        configs: typing.Iterable[TranslationConfig] | Callable[[], typing.Iterable[TranslationConfig]] | None = None,
 ) -> tuple[dict[str, Any], RunKwargs]:
     a, b, c = create_name(vertical, horizontal, ngram)
     name = f'{name}_{a}_{b}_{c}'
@@ -73,24 +75,43 @@ def create_run(
         clean_translations=clean_translations,
         skip_if_finished_marker_set=False,
         global_model_dir=f"../data/{identifier}/shared",
-        ngram_statistics=ngram_statistics
+        ngram_statistics=ngram_statistics,
+        configs=configs
     )
 
 
 
 def short_configs() -> list[TranslationConfig]:
-    return list(filter(lambda v: v.config_id[0] in ('P', 'U', 'O'), create_configs()))
+    return list(filter(lambda v: v.config_id[0] in ('P', 'U', 'O', 'L', 'T', 'J', 'A', 'B', 'C'), create_configs()))
 
 if __name__ == '__main__':
     """The experiments for the paper 'TMT: A Simple Way to Translate Topic Models Using Dictionaries'."""
-    # print(determine_all_combinations())
-    # short_configs()
-    # exit(0)
+    for i, hvn in enumerate(itertools.chain(
+        [(None, None, None)],
+        create_all_configs()
+    )):
+        horizontal, vertical, ngram = hvn
+        info, cfg = create_run(
+            "v3",
+            "experiment4",
+            "dictionary_20241130_proc3",
+            "../data/ngrams/counts_with_proc.bin",
+            horizontal=horizontal,
+            vertical=vertical,
+            ngram=ngram,
+            clean_translations=True,
+            configs=short_configs
+        )
+        print(f"Run {i + 1}: {info['name']}")
+        print(f"{cfg}")
+        run(**cfg)
+
+
 
     configs = [
         create_run(
             "v3",
-            "experiment3",
+            "experiment4",
             "dictionary_20241130_proc3",
             "../data/ngrams/counts_with_proc.bin",
             horizontal=None,

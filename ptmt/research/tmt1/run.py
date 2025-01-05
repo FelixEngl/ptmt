@@ -89,6 +89,7 @@ class RunKwargs(typing.TypedDict):
     skip_if_finished_marker_set: typing.NotRequired[bool]
     global_model_dir: typing.NotRequired[Path | PathLike | str]
     ngram_statistics: typing.NotRequired[Path | PathLike | str | None | PyNGramStatistics]
+    configs: typing.NotRequired[typing.Iterable[TranslationConfig] | Callable[[], typing.Iterable[TranslationConfig]]]
 
 
 def run(
