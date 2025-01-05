@@ -20,7 +20,7 @@ class HorizontalKwargs(typing.TypedDict):
     mean: typing.NotRequired[MeanMethod]
     h_alpha: typing.NotRequired[float]
     booster: typing.NotRequired[BoostMethod]
-    linear_transformed: typing.NotRequired[float]
+    linear_transformed: typing.NotRequired[bool]
     factor: typing.NotRequired[float]
     only_positive_boost: typing.NotRequired[bool]
     normalize_mode: typing.NotRequired[NormalizeMode]

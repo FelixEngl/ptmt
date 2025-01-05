@@ -11,10 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import typing
 from enum import auto
 from typing import Optional, Any, Callable
 
+
+def iter_pseudo_enum[T](t: type[T]) -> typing.Iterator[T]:
+    for x in dir(t):
+        value = getattr(t, x)
+        if isinstance(value, t):
+            yield value
 
 class CallableEnumValue:
     def __init__(self, fkt: Callable[..., Any], value: Optional[Any] = None):
