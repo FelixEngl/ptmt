@@ -87,7 +87,7 @@ class RunKwargs(typing.TypedDict):
     config_modifier: typing.NotRequired[typing.Callable[[TranslationConfig, PyTopicModel, PyDictionary], PyTranslationConfig]]
     clean_translations: typing.NotRequired[bool]
     skip_if_finished_marker_set: typing.NotRequired[bool]
-    global_model_dir: typing.NotRequired[Path | PathLike | str]
+    shared_dir: typing.NotRequired[Path | PathLike | str]
     ngram_statistics: typing.NotRequired[Path | PathLike | str | None | PyNGramStatistics]
     configs: typing.NotRequired[typing.Iterable[TranslationConfig] | Callable[[], typing.Iterable[TranslationConfig]]]
 
@@ -104,12 +104,26 @@ def run(
         highlight: tuple[str,...] | None = None,
         clean_translations: bool = False,
         skip_if_finished_marker_set: bool = True,
-        global_model_dir: Path | PathLike | str | None = None,
+        shared_dir: Path | PathLike | str | None = None,
         ngram_statistics: Path | PathLike | str | None | PyNGramStatistics = None,
 ):
     target_folder = target_folder if isinstance(target_folder, Path) else Path(target_folder)
 
-    path_to_extracted_data = target_folder / "preprocessed" / "extracted_data.bulkjson"
+    if shared_dir is not None:
+        shared_dir = Path(shared_dir)
+        path_to_extracted_data = shared_dir / "preprocessed" / "extracted_data.bulkjson"
+        if not path_to_extracted_data.exists():
+            path_to_extracted_data2 = target_folder / "preprocessed" / "extracted_data.bulkjson"
+            if path_to_extracted_data2.exists():
+                path_to_extracted_data = path_to_extracted_data2
+    else:
+        path_to_extracted_data = target_folder / "preprocessed" / "extracted_data.bulkjson"
+
+    if not path_to_extracted_data.exists() and shared_dir is not None:
+        tmp = path_to_extracted_data
+        path_to_extracted_data = shared_dir / "preprocessed" / "extracted_data.bulkjson"
+        if not path_to_extracted_data.exists():
+            path_to_extracted_data = tmp
 
     if not path_to_extracted_data.exists():
         print(f"{path_to_extracted_data} does not exist! Trying to create the preprocessed data.")
@@ -173,7 +187,7 @@ def run(
         config_modifier=config_modifier,
         clean_translations=clean_translations,
         skip_if_finished_marker_set=skip_if_finished_marker_set,
-        global_model_dir=global_model_dir,
+        shared_dir=shared_dir,
         ngram_statistics=ngram_statistics
     )
 

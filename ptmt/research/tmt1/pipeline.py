@@ -468,7 +468,7 @@ def run_pipeline(
         config_modifier: Callable[[TranslationConfig, PyTopicModel, PyDictionary], PyTranslationConfig] | None = None,
         clean_translations: bool = False,
         skip_if_finished_marker_set: bool = True,
-        global_model_dir: Path | PathLike | str | None = None,
+        shared_dir: Path | PathLike | str | None = None,
         ngram_statistics: Path | PathLike | str | None | PyNGramStatistics = None,
 ):
     """
@@ -522,11 +522,11 @@ def run_pipeline(
     root_dir = root_dir if isinstance(root_dir, Path) else Path(root_dir)
     root_dir.mkdir(parents=True, exist_ok=True)
 
-    if global_model_dir is None:
+    if shared_dir is None:
         big_data_gen_path = root_dir
     else:
-        global_model_dir = Path(global_model_dir)
-        big_data_gen_path = global_model_dir
+        shared_dir = Path(shared_dir)
+        big_data_gen_path = shared_dir
 
     processed_phrase_data, docs_phrases, processed_data, docs, docs_filtered, docs_filtered_phrase = None, None, None, None, None, None
     if pipeline_kwargs is not None:
@@ -540,19 +540,19 @@ def run_pipeline(
         match t:
             case "p":
                 processed_phrase_data = big_data_gen_path / "processed_data_phrases.bulkjson"
-                docs_phrases = DataDirectory(root_dir / (experiment_name or ".") / f"paper_phrases{target_name}", global_model_dir)
+                docs_phrases = DataDirectory(root_dir / (experiment_name or ".") / f"paper_phrases{target_name}", shared_dir)
             case "n":
                 if processed_data is None:
                     processed_data = big_data_gen_path / "processed_data.bulkjson"
-                docs = DataDirectory(root_dir / (experiment_name or ".") / f"paper_no_phrases{target_name}", global_model_dir)
+                docs = DataDirectory(root_dir / (experiment_name or ".") / f"paper_no_phrases{target_name}", shared_dir)
             case "f":
                 if processed_data is None:
                     processed_data = big_data_gen_path / "processed_data.bulkjson"
-                docs_filtered = DataDirectory(root_dir / (experiment_name or ".") / f"paper_filtered_dic{target_name}", global_model_dir)
+                docs_filtered = DataDirectory(root_dir / (experiment_name or ".") / f"paper_filtered_dic{target_name}", shared_dir)
             case "m":
                 if processed_data is None:
                     processed_data = big_data_gen_path / "processed_data.bulkjson"
-                docs_filtered_phrase = DataDirectory(root_dir / (experiment_name or ".") / f"paper_filtered_dic_no_phrases{target_name}", global_model_dir)
+                docs_filtered_phrase = DataDirectory(root_dir / (experiment_name or ".") / f"paper_filtered_dic_no_phrases{target_name}", shared_dir)
             case _:
                 raise ValueError(f"{t} not supported")
 

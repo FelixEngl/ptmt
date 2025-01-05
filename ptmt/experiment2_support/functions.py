@@ -82,7 +82,7 @@ def _single_word(k: str, v: Any) -> str:
 
 def _compact(start: str, info: dict[str, Any] | None) -> str:
     s1 = start
-    if info is not None:
+    if info is not None and len(info) > 0:
         for k, v in info.items():
             s1 += _single_word(k, v)
     else:
@@ -147,6 +147,8 @@ def determine_all_combinations() -> int:
 def create_all_configs() -> typing.Iterator[tuple[HorizontalKwargs, VerticalKwargs, NGramBoostKwargs]]:
 
     def fm(v):
+        if v is None:
+            return True
         if 'divergence' not in v:
             return True
         if not _needs_alpha(v['divergence']):
@@ -163,13 +165,21 @@ def create_all_configs() -> typing.Iterator[tuple[HorizontalKwargs, VerticalKwar
         yield_all_configs(**v_configs_base),
     )
 
-    n_configs = ({
-        'boost_lang_a': a,
-        'boost_lang_b': b,
-    } for a, b in itertools.product(
-        yield_all_configs(**n_config_base),
-        yield_all_configs(**n_config_base)
-    ))
+
+    def n_configs_creator():
+        for a, b in itertools.product(
+            yield_all_configs(**n_config_base),
+            yield_all_configs(**n_config_base)
+        ):
+            if a is None and b is None:
+                yield None
+            else:
+                yield {
+                    'boost_lang_a': a,
+                    'boost_lang_b': b,
+                }
+
+    n_configs = n_configs_creator()
 
     return itertools.product(
         h_configs,

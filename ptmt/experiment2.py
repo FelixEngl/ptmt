@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import pprint
 from typing import Callable
 
 from ptmt.experiment2_support.functions import *
@@ -30,6 +31,7 @@ def create_run(
         ngram: Optional[NGramBoostKwargs] = None,
         clean_translations: bool = False,
         configs: typing.Iterable[TranslationConfig] | Callable[[], typing.Iterable[TranslationConfig]] | None = None,
+        shared_dir: Path | PathLike | str | None = None,
 ) -> tuple[dict[str, Any], RunKwargs]:
     a, b, c = create_name(vertical, horizontal, ngram)
     name = f'{name}_{a}_{b}_{c}'
@@ -41,25 +43,32 @@ def create_run(
     }
 
 
-    if vertical is not None:
+    if vertical is not None and len(vertical) > 0:
         vertical = create_vertical_factory(
             create_basic_boost_factory(
                 **vertical,
             ),
             **vertical
         )
-    if horizontal is not None:
+    else:
+        vertical = None
+
+    if horizontal is not None and len(horizontal) > 0:
         horizontal = create_horizontal_factory(
             create_basic_boost_factory(
                 **horizontal,
             ),
             **horizontal
         )
+    else:
+        horizontal = None
 
-    if ngram is not None:
-        ngram = create_ngram_language_boost_factory(
-            **ngram,
-        )
+    if ngram is not None and len(ngram) > 0:
+        ngram = create_ngram_language_boost_factory(**ngram)
+    else:
+        ngram = None
+
+    shared_dir = shared_dir if shared_dir is not None else Path(f"../data/{identifier}/shared")
 
     return targ, RunKwargs(
         experiment_name=name,
@@ -74,7 +83,7 @@ def create_run(
         ),
         clean_translations=clean_translations,
         skip_if_finished_marker_set=False,
-        global_model_dir=f"../data/{identifier}/shared",
+        shared_dir=shared_dir,
         ngram_statistics=ngram_statistics,
         configs=configs
     )
@@ -86,6 +95,12 @@ def short_configs() -> list[TranslationConfig]:
 
 if __name__ == '__main__':
     """The experiments for the paper 'TMT: A Simple Way to Translate Topic Models Using Dictionaries'."""
+
+    print(
+        list(create_all_configs())
+    )
+
+    gen = set()
     for i, hvn in enumerate(itertools.chain(
         [(None, None, None)],
         create_all_configs()
@@ -100,29 +115,13 @@ if __name__ == '__main__':
             vertical=vertical,
             ngram=ngram,
             clean_translations=True,
-            configs=short_configs
+            configs=short_configs,
+            shared_dir=f"../data/experiment3/shared"
         )
+        old = len(gen)
+        gen.add(info['name'])
+        if old == len(gen):
+            continue
         print(f"Run {i + 1}: {info['name']}")
-        print(f"{cfg}")
-        run(**cfg)
-
-
-
-    configs = [
-        create_run(
-            "v3",
-            "experiment4",
-            "dictionary_20241130_proc3",
-            "../data/ngrams/counts_with_proc.bin",
-            horizontal=None,
-            vertical=None,
-            ngram=None,
-            clean_translations=True
-        ),
-    ]
-
-    for i, info_and_cfg in enumerate(configs):
-        info, cfg = info_and_cfg
-        print(f"Run {i+1}/{len(configs)}")
-        print(f"{cfg}")
+        pprint.pprint(f"{cfg}")
         run(**cfg)

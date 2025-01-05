@@ -64,10 +64,13 @@ def _estimate_count(values: Iterable[Any] | Alternative[Any, Any] | Single[Any] 
         case unknown:
             raise TypeError(f"The type {type(unknown)} is not supported")
 
-def yield_all_configs(**kwargs: Iterable[Any] | Alternative[Any, Any] | Single[Any] | type[Any] | None) -> Iterator[dict[str, Any]]:
+def yield_all_configs(**kwargs: Iterable[Any] | Alternative[Any, Any] | Single[Any] | type[Any] | None) -> Iterator[dict[str, Any] | None]:
     temp = tuple(_to_tuples(name, value) for name, value in kwargs.items())
     for combined in itertools.product(*temp):
-        yield dict(combined)
+        if len(combined) == 0:
+            yield None
+        else:
+            yield dict(combined)
 
 
 def estimate_count(**kwargs: Iterable[Any] | Alternative[Any, Any] | Single[Any] | type[Any] | None) -> dict[str, int]:
