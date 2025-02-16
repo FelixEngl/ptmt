@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import encodings
 import json
 import math
 import os
@@ -120,6 +120,18 @@ class _RunSingleKWArgs(TypedDict):
 
 
 
+def _print_big_view(data_dir: DataDirectory):
+    with data_dir.simple_text_view_path.open(mode="w", encoding='utf-8') as o:
+        for value in data_dir.iter_all_translations():
+            topic_model = value.model_uncached
+            o.write(f"--------- {value.name} ---------\n")
+            for topic_nr in range(topic_model.k):
+                o.write(f"  Topic ID: {topic_nr}\n\n")
+                for entry in topic_model.get_words_of_topic_sorted(topic_nr)[:30]:
+
+                    o.write(f"    {entry[0]}: {entry[1]:0.5f}\n")
+                o.write("\n~~~~~~~~~~~\n")
+
 
 def run_single(
         marker: str,
@@ -216,6 +228,10 @@ def run_single(
     print(f"Execute NDCG with {ndcg_kwargs}")
 
     output_table(data_dir, marker)
+
+
+
+    _print_big_view(data_dir)
 
 
     if not isinstance(coocurences_kwargs, bool) or coocurences_kwargs:
@@ -541,20 +557,38 @@ def run_pipeline(
             case "p":
                 processed_phrase_data = big_data_gen_path / "processed_data_phrases.bulkjson"
                 docs_phrases = DataDirectory(root_dir / (experiment_name or ".") / f"paper_phrases{target_name}", shared_dir)
+                if skip_if_finished_marker_set and docs.is_finished():
+                    print("Skip finished marker set")
+                    docs_phrases = None
             case "n":
                 if processed_data is None:
                     processed_data = big_data_gen_path / "processed_data.bulkjson"
                 docs = DataDirectory(root_dir / (experiment_name or ".") / f"paper_no_phrases{target_name}", shared_dir)
+
+                if skip_if_finished_marker_set and docs.is_finished():
+                    print("Skip finished marker set")
+                    docs = None
+
             case "f":
                 if processed_data is None:
                     processed_data = big_data_gen_path / "processed_data.bulkjson"
                 docs_filtered = DataDirectory(root_dir / (experiment_name or ".") / f"paper_filtered_dic{target_name}", shared_dir)
+                if skip_if_finished_marker_set and docs.is_finished():
+                    print("Skip finished marker set")
+                    docs_filtered = None
             case "m":
                 if processed_data is None:
                     processed_data = big_data_gen_path / "processed_data.bulkjson"
                 docs_filtered_phrase = DataDirectory(root_dir / (experiment_name or ".") / f"paper_filtered_dic_no_phrases{target_name}", shared_dir)
+                if skip_if_finished_marker_set and docs.is_finished():
+                    print("Skip finished marker set")
+                    docs_filtered_phrase = None
             case _:
                 raise ValueError(f"{t} not supported")
+
+    if skip_if_finished_marker_set and docs_phrases is None and docs is None and processed_data is None and docs_filtered_phrase is None:
+        print("All finished, skipping.")
+        return
 
     if big_data_gen_path is not None:
         big_data_gen_path.mkdir(exist_ok=True, parents=True)

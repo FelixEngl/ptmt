@@ -89,6 +89,12 @@ def _compact(start: str, info: dict[str, Any] | None) -> str:
         s1 += '#'
     return s1
 
+
+def _uncompact(name: str) -> (str, dict[str, Any] | None):
+    special_values = dict()
+
+
+
 def create_name(
         vertical: Optional[VerticalKwargs] = None,
         horizontal: Optional[HorizontalKwargs] = None,

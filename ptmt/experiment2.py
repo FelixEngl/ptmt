@@ -16,7 +16,6 @@ from typing import Callable
 
 from ptmt.experiment2_support.functions import *
 from ptmt.research.protocols import TranslationConfig
-from ptmt.research.tmt1.configs import create_configs
 from ptmt.research.tmt1.run import run, RunKwargs
 
 
@@ -82,7 +81,7 @@ def create_run(
             ngram=ngram
         ),
         clean_translations=clean_translations,
-        skip_if_finished_marker_set=False,
+        skip_if_finished_marker_set=True,
         shared_dir=shared_dir,
         ngram_statistics=ngram_statistics,
         configs=configs
@@ -91,7 +90,7 @@ def create_run(
 
 
 def short_configs() -> list[TranslationConfig]:
-    return list(filter(lambda v: v.config_id[0] in ('P', 'U', 'O', 'L', 'T', 'J', 'A', 'B', 'C'), create_configs()))
+    return list(filter(lambda v: v.config_id[0] in ('P', 'U', 'O', '', 'L', 'T', 'J', 'A', 'B', 'C'), create_configs()))
 
 if __name__ == '__main__':
     """The experiments for the paper 'TMT: A Simple Way to Translate Topic Models Using Dictionaries'."""
@@ -108,14 +107,14 @@ if __name__ == '__main__':
         horizontal, vertical, ngram = hvn
         info, cfg = create_run(
             "v3",
-            "experiment4",
+            "experiment6",
             "dictionary_20241130_proc3",
             "../data/ngrams/counts_with_proc.bin",
             horizontal=horizontal,
             vertical=vertical,
             ngram=ngram,
             clean_translations=True,
-            configs=short_configs,
+            # configs=short_configs,
             shared_dir=f"../data/experiment3/shared"
         )
         old = len(gen)

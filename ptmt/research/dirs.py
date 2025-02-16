@@ -181,6 +181,8 @@ class LazyLoadingEntry:
     def ndcg_path(self) -> Path:
         return self.path / self._ndcg_path
 
+
+
     @property
     def ndcg(self) -> NDCG:
         """
@@ -262,6 +264,11 @@ class DataDirectory:
 
     def rm_is_finished(self):
         self.finished_marker.unlink(missing_ok=True)
+
+
+    @property
+    def simple_text_view_path(self) -> Path:
+        return self.root_dir / "simple_text_view.txt"
 
     @property
     def shareable_paths(self):
