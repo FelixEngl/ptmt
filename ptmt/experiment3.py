@@ -10,12 +10,6 @@ from ptmt.research.protocols import TranslationConfig
 from ptmt.research.tmt1.pipeline import NDCGKwArgs
 from ptmt.research.tmt1.run import run, RunKwargs
 
-
-# ratings = ldatranslate.load_ratings(r'E:\git\ptmt\data\experiment6\v3_V#_HdJSa1-0000sMmMMAMh0-5000bLlFf0-5000oFnM_N#\paper_filtered_dic\translation\translations\A0\ratings.json')
-#
-# pprint.pprint(len(ratings))
-
-
 statistical_data = list()
 ct = set()
 for i, hvn in enumerate(itertools.chain(
@@ -68,8 +62,10 @@ for i, hvn in enumerate(itertools.chain(
             statistical_data_entry[plot.name] = avg_ndcg
     statistical_data.append(statistical_data_entry)
 
-
-csv.writer(open("statistical_data.csv", "w")).writerows(statistical_data)
+with open("statistical_data.csv", "w", newline='') as f:
+    writer = csv.DictWriter(f, statistical_data[0].keys())
+    writer.writeheader()
+    writer.writerows(statistical_data)
 
 # pprint.pprint(ct)
 # print((len(ct) - 1)/3)
