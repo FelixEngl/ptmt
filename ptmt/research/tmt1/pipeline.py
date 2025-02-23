@@ -557,7 +557,7 @@ def run_pipeline(
             case "p":
                 processed_phrase_data = big_data_gen_path / "processed_data_phrases.bulkjson"
                 docs_phrases = DataDirectory(root_dir / (experiment_name or ".") / f"paper_phrases{target_name}", shared_dir)
-                if skip_if_finished_marker_set and docs.is_finished():
+                if skip_if_finished_marker_set and docs_phrases.is_finished():
                     print("Skip finished marker set")
                     docs_phrases = None
             case "n":
@@ -573,14 +573,14 @@ def run_pipeline(
                 if processed_data is None:
                     processed_data = big_data_gen_path / "processed_data.bulkjson"
                 docs_filtered = DataDirectory(root_dir / (experiment_name or ".") / f"paper_filtered_dic{target_name}", shared_dir)
-                if skip_if_finished_marker_set and docs.is_finished():
+                if skip_if_finished_marker_set and docs_filtered.is_finished():
                     print("Skip finished marker set")
                     docs_filtered = None
             case "m":
                 if processed_data is None:
                     processed_data = big_data_gen_path / "processed_data.bulkjson"
                 docs_filtered_phrase = DataDirectory(root_dir / (experiment_name or ".") / f"paper_filtered_dic_no_phrases{target_name}", shared_dir)
-                if skip_if_finished_marker_set and docs.is_finished():
+                if skip_if_finished_marker_set and docs_filtered_phrase.is_finished():
                     print("Skip finished marker set")
                     docs_filtered_phrase = None
             case _:

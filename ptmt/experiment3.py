@@ -43,8 +43,8 @@ for i, hvn in enumerate(itertools.chain(
     if ndcg_kwargs is None:
         ndcg_kwargs: NDCGKwArgs = NDCGKwArgs()
     ndcg_kwargs.setdefault("top_n_weigts", (1, 1, 1))
-    ndcg_kwargs.setdefault("save", False)
-    ndcg_kwargs.setdefault("ignore_existing_file", True)
+    ndcg_kwargs.setdefault("save", True)
+    ndcg_kwargs.setdefault("ignore_existing_file", False)
 
     print(info['name'])
     for translation in data.iter_all_translations():
