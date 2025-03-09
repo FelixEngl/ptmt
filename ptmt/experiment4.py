@@ -177,13 +177,13 @@ def _fitness_func(ga_instance: pygad.GA, solution: Gene, solution_idx) -> float:
         clean_translations=True,
         shared_dir=f"../data/experiment3/shared"
     )
-    print(info)
-    fitness = random.random()
-
-    parameter_values.append(solution, fitness)
-
-
-    return fitness
+    # print(info)
+    # fitness = random.random()
+    #
+    # parameter_values.append(solution, fitness)
+    #
+    #
+    # return fitness
 
     data = run(**cfg)
     ndcg_kwargs = { "top_n_weigts": (3, 2, 1) }
@@ -209,9 +209,9 @@ def _mutate_to_best_known(offspring, ga_instance: pygad.GA):
                 offspring[i] = parameter_values.get_best_value(i)
     return offspring
 
-def _on_generation(ga_instance: pygad.GA):
-    print("Next Generation")
-    pass
+# def _on_generation(ga_instance: pygad.GA):
+#     print("Next Generation")
+#     pass
 
 if __name__ == '__main__':
 
@@ -241,7 +241,7 @@ if __name__ == '__main__':
         num_generations=5,
         fitness_func=_fitness_func,
         num_parents_mating=4,
-        on_generation=_on_generation,
+        # on_generation=_on_generation,
         save_best_solutions=True,
         mutation_type=_mutate_to_best_known
     )
