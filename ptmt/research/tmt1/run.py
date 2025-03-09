@@ -20,10 +20,11 @@ from ldatranslate import PyStemmingAlgorithm, TokenCountFilter, PyTopicModel, Py
 from ldatranslate.ldatranslate import PyNGramStatistics
 from matplotlib.pyplot import colormaps
 
+from ptmt.research.dirs import DataDirectory
 from ptmt.research.helpers.article_processor_creator import PyAlignedArticleProcessorKwArgs
 from ptmt.research.plotting.generate_plots import MPLColor
 from ptmt.research.protocols import TranslationConfig
-from ptmt.research.tmt1.pipeline import run_pipeline, LinePlotKWArgs, BarPlotKWArgs, CoocurrencesKwArgs
+from ptmt.research.tmt1.pipeline import run_pipeline, LinePlotKWArgs, BarPlotKWArgs
 from ptmt.research.tmt1.toolkit.test_ids import test_ids
 from ptmt.toolkit.stopwords import get_stop_words
 
@@ -106,7 +107,7 @@ def run(
         skip_if_finished_marker_set: bool = True,
         shared_dir: Path | PathLike | str | None = None,
         ngram_statistics: Path | PathLike | str | None | PyNGramStatistics = None,
-):
+) -> DataDirectory:
     target_folder = target_folder if isinstance(target_folder, Path) else Path(target_folder)
 
     if shared_dir is not None:
@@ -152,7 +153,7 @@ def run(
     # if highlight is None:
     #     highlight = ("P5", "G5", "P3", "M3", "C5*", "B3*")
 
-    run_pipeline(
+    results = run_pipeline(
         experiment_name,
         "en",
         "de",
@@ -190,6 +191,8 @@ def run(
         shared_dir=shared_dir,
         ngram_statistics=ngram_statistics
     )
+
+    return results['f']
 
 
 

@@ -1,5 +1,3 @@
-numpy == 1.26
-scipy == 1.12.0
 jsonpickle
 tomotopy
 matplotlib
@@ -19,3 +17,6 @@ openpyxl
 more-itertools
 adjustText
 fraction
+pygad
+numpy == 1.26
+scipy == 1.12.0

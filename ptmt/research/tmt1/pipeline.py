@@ -161,10 +161,10 @@ def run_single(
         clean_translation: bool,
         skip_if_finished_marker_set: bool,
         ngram_statistics: PyNGramStatistics | None,
-):
+) -> DataDirectory:
     if skip_if_finished_marker_set and data_dir.is_finished():
         print(f"{data_dir.root_dir} is already finished.")
-        return
+        return data_dir
     else:
         data_dir.rm_is_finished()
     
@@ -448,6 +448,8 @@ def run_single(
 
     data_dir.mark_as_finished()
 
+    return data_dir
+
 
 _TestIdType = typing.Iterable[int] | float | Fraction | str | Path | os.PathLike
 
@@ -486,7 +488,7 @@ def run_pipeline(
         skip_if_finished_marker_set: bool = True,
         shared_dir: Path | PathLike | str | None = None,
         ngram_statistics: Path | PathLike | str | None | PyNGramStatistics = None,
-):
+) -> dict[str, DataDirectory]:
     """
 
     :param skip_if_finished_marker_set:
@@ -552,6 +554,8 @@ def run_pipeline(
     else:
         target_name = ''
 
+    result_dicts = {}
+
     for t in mode:
         match t:
             case "p":
@@ -559,6 +563,7 @@ def run_pipeline(
                 docs_phrases = DataDirectory(root_dir / (experiment_name or ".") / f"paper_phrases{target_name}", shared_dir)
                 if skip_if_finished_marker_set and docs_phrases.is_finished():
                     print("Skip finished marker set")
+                    result_dicts['p'] = docs_phrases
                     docs_phrases = None
             case "n":
                 if processed_data is None:
@@ -567,6 +572,7 @@ def run_pipeline(
 
                 if skip_if_finished_marker_set and docs.is_finished():
                     print("Skip finished marker set")
+                    result_dicts['n'] = docs
                     docs = None
 
             case "f":
@@ -575,6 +581,7 @@ def run_pipeline(
                 docs_filtered = DataDirectory(root_dir / (experiment_name or ".") / f"paper_filtered_dic{target_name}", shared_dir)
                 if skip_if_finished_marker_set and docs_filtered.is_finished():
                     print("Skip finished marker set")
+                    result_dicts['f'] = docs_filtered
                     docs_filtered = None
             case "m":
                 if processed_data is None:
@@ -582,13 +589,14 @@ def run_pipeline(
                 docs_filtered_phrase = DataDirectory(root_dir / (experiment_name or ".") / f"paper_filtered_dic_no_phrases{target_name}", shared_dir)
                 if skip_if_finished_marker_set and docs_filtered_phrase.is_finished():
                     print("Skip finished marker set")
+                    result_dicts['m'] = docs_filtered_phrase
                     docs_filtered_phrase = None
             case _:
                 raise ValueError(f"{t} not supported")
 
     if skip_if_finished_marker_set and docs_phrases is None and docs is None and processed_data is None and docs_filtered_phrase is None:
         print("All finished, skipping.")
-        return
+        return result_dicts
 
     if big_data_gen_path is not None:
         big_data_gen_path.mkdir(exist_ok=True, parents=True)
@@ -671,7 +679,7 @@ def run_pipeline(
     )
 
     if docs is not None:
-        run_single(
+        docs = run_single(
             "no_phrases",
             docs,
             **args
@@ -699,7 +707,7 @@ def run_pipeline(
 
         args_copy = dict(args)
         args_copy["filters"] = ((_filter_a1, _filter_a1), (_filter_a2, _filter_a2))
-        run_single("filtered_dict", docs_filtered, **args_copy)
+        docs_filtered = run_single("filtered_dict", docs_filtered, **args_copy)
 
     if docs_filtered_phrase is not None:
         def _filter_a1(word: str, _: LoadedMetadataEx | None) -> bool:
@@ -723,15 +731,23 @@ def run_pipeline(
 
         args_copy = dict(args)
         args_copy["filters"] = ((_filter_a1, _filter_a1), (_filter_a2, _filter_a2))
-        run_single("filtered_dict_no_phrase", docs_filtered_phrase, **args_copy)
+        docs_filtered_phrase = run_single("filtered_dict_no_phrase", docs_filtered_phrase, **args_copy)
 
     if docs_phrases is not None:
         args_copy = dict(args)
         args_copy["processor"] = create_processor(**processor_kwargs, phrases_a=dictionary.voc_a, phrases_b=dictionary.voc_b)
-        run_single(
+        docs_phrases = run_single(
             "phrases",
             docs_phrases,
             **args_copy
         )
 
-
+    if docs_phrases is not None:
+        result_dicts['p'] = docs_phrases
+    if docs is not None:
+        result_dicts['n'] = docs
+    if docs_filtered is not None:
+        result_dicts['f'] = docs_filtered
+    if docs_filtered_phrase is not None:
+        result_dicts['m'] = docs_filtered_phrase
+    return result_dicts

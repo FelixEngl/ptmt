@@ -11,8 +11,6 @@ from ptmt.create.ngram import NGramBoostKwargs, NGramFactory, create_ngram_langu
 from ptmt.create.vertical import VerticalBoostFactory, VerticalKwargs, create_vertical_factory
 from ptmt.experiment2_configs import *
 from ptmt.research.protocols import TranslationConfig
-from ptmt.research.tmt1.configs import create_configs
-from ptmt.research.tmt1.run import run, RunKwargs
 from ptmt.toolkit.combination_creator import yield_all_configs, estimate_complete_count, \
     Single
 
