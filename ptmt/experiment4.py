@@ -242,7 +242,7 @@ if __name__ == '__main__':
         fitness_func=_fitness_func,
         num_parents_mating=4,
         # on_generation=_on_generation,
-        save_best_solutions=True,
+        # save_best_solutions=True,
         mutation_type=_mutate_to_best_known
     )
 
