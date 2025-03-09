@@ -260,3 +260,5 @@ if __name__ == '__main__':
         print(parameter_values2)
         print(parameter_values)
         print(parameter_values2 == parameter_values)
+
+    print(gene_manager)
