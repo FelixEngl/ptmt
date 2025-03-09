@@ -178,12 +178,12 @@ def _fitness_func(ga_instance: pygad.GA, solution: Gene, solution_idx) -> float:
         shared_dir=f"../data/experiment3/shared"
     )
     print(info)
-    # fitness = random.random()
-    #
-    # parameter_values.append(solution, fitness)
-    #
-    #
-    # return fitness
+    fitness = random.random()
+
+    parameter_values.append(solution, fitness)
+
+
+    return fitness
 
     data = run(**cfg)
     ndcg_kwargs = { "top_n_weigts": (3, 2, 1) }
@@ -249,16 +249,7 @@ if __name__ == '__main__':
     ga.run()
     ga.summary()
 
-
-    print(parameter_values == parameter_values)
-
     with open("data.bin", "wb") as f:
         pickle.dump(parameter_values, f)
 
-    with open("data.bin", "rb") as f:
-        parameter_values2 = pickle.load(f)
-        print(parameter_values2)
-        print(parameter_values)
-        print(parameter_values2 == parameter_values)
-
-    print(gene_manager)
+    print(gene_manager.gene_type())
