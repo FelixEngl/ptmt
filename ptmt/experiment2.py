@@ -16,6 +16,7 @@ from typing import Callable
 
 from ptmt.experiment2_support.functions import *
 from ptmt.research.protocols import TranslationConfig
+from ptmt.research.tmt1.configs import create_configs
 from ptmt.research.tmt1.run import run, RunKwargs
 
 
@@ -90,7 +91,7 @@ def create_run(
 
 
 def short_configs() -> list[TranslationConfig]:
-    return list(filter(lambda v: v.config_id[0] in ('P', 'U', 'O', '', 'L', 'T', 'J', 'A', 'B', 'C'), create_configs()))
+    return list(filter(lambda v: v.config_id[0] in ('P', 'U', 'O', 'L', 'T', 'J', 'A', 'B', 'C'), create_configs()))
 
 if __name__ == '__main__':
     """The experiments for the paper 'TMT: A Simple Way to Translate Topic Models Using Dictionaries'."""
