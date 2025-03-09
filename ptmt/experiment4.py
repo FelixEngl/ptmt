@@ -178,12 +178,12 @@ def _fitness_func(ga_instance: pygad.GA, solution: Gene, solution_idx) -> float:
         shared_dir=f"../data/experiment3/shared"
     )
     print(info)
-    fitness = random.random()
-
-    parameter_values.append(solution, fitness)
-
-
-    return fitness
+    # fitness = random.random()
+    #
+    # parameter_values.append(solution, fitness)
+    #
+    #
+    # return fitness
 
     data = run(**cfg)
     ndcg_kwargs = { "top_n_weigts": (3, 2, 1) }
