@@ -61,13 +61,13 @@ def modifier_factory(
 def _single_word(k: str, v: Any) -> str:
     if isinstance(v, float):
         u = f'{v:.4f}'.replace('.', '-')
-    elif v is None:
-        u = '#'
-    elif isinstance(v, bool):
-        if v:
-            u = '+'
-        else:
-            u = '?'
+    # elif v is None:
+    #     u = '#'
+    # elif isinstance(v, bool):
+    #     if v:
+    #         u = '+'
+    #     else:
+    #         u = '?'
     elif (isinstance(v, MeanMethod)
           or isinstance(v, BoostMethod)
           or isinstance(v, ScoreModifierCalculator)

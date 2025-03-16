@@ -1,4 +1,3 @@
-import base64
 import inspect
 import random
 import typing
@@ -6,7 +5,6 @@ import typing
 import math
 from pprint import pprint
 
-import numpy as np
 from ldatranslate.ldatranslate import *
 
 from ptmt.create.horizontal import HorizontalKwargs
@@ -188,6 +186,7 @@ class GeneDescriptor:
         return self.read_single_value_to_args(value)[1] is None
 
     def read_single_value_to_args(self, value: int | float) -> (tuple[str, ...], typing.Any | None):
+
         if (self.is_optional or self.is_only_nullable_for_filter) and value == self.null:
             return self.key, None
         if self._base_type_is_float:
@@ -233,7 +232,6 @@ class GeneDescriptor:
             if value is None and i != len(self.key) - 1:
                 assert self.optional_sub, f"Something else than a special nullable for filter is not mappable! {self.key}"
                 break
-
         return self._convert_gene_value(value)
 
     def set_value_from_gene(self, gene: typing.Sequence[int], d: dict[str, typing.Any]) -> dict[str, typing.Any]:
@@ -260,13 +258,19 @@ class GeneDescriptor:
         s += f'\n  Compatible: {self.compatible_types}'
         s += f'\n  Range: {self._range}'
         if self.is_enum:
-            s += f'\n  Enum Values:'
+            s += f'\n  Enum Values AB:'
             for i, v in enumerate(self._mapping_ab):
                 s += f"\n    {i}: {v},"
+            s += f'\n  Enum Values BA:'
+            for k, v in self._mapping_ba.items():
+                s += f"\n    {k}: {v},"
         elif self.is_bool:
-            s += f'\n  Bool Values:'
+            s += f'\n  Bool Values AB:'
             for i, v in enumerate(self._mapping_ab):
                 s += f"\n    {i}: {v},"
+            s += '\n  Bool Values BA:'
+            for k, v in self._mapping_ba.items():
+                s += f"\n    {k}: {v},"
         elif self._base_type_is_float:
             s += f'\n  Base Type:'
             s += f"\n    FLOAT "
@@ -347,8 +351,8 @@ class GeneDescriptor:
 
 
 class GeneKwargs(typing.TypedDict):
-    horizontal: typing.NotRequired[HorizontalKwargs]
-    vertical: typing.NotRequired[VerticalKwargs]
+    horizontal: HorizontalKwargs
+    vertical: VerticalKwargs
     ngram: typing.NotRequired[NGramBoostKwargs]
 
 
@@ -477,20 +481,33 @@ class GeneManager:
                 return v
         return None
 
-    def rnd(self, rnd: random.Random | None = None) -> list[int | float]:
+    def rnd(self, rnd: random.Random | None = None, dormand_genes: bool = True) -> Gene:
         gene = [0] * len(self.genes)
-        to_null = set()
         for g in self.genes:
-            value = g.rnd(rnd)
-            if g.is_null(value) and g.is_only_nullable_for_filter:
-                to_null.add(g.key[:-2])
-            gene[g.position] = value
+            gene[g.position] = g.rnd(rnd)
+        if dormand_genes:
+            return gene
+        return self.clean_gene(gene)
+
+
+    def repair_faulty_mutation(self, gene: Gene) -> Gene:
+        gene = list(gene)
+        for i, g in enumerate(self.genes):
+            if not g.gene_is_valid(gene):
+                if not g._base_type_is_float:
+                    gene[i] = g.rnd()
+        return gene
+
+    def clean_gene(self, gene: Gene) -> Gene:
+        to_null = set()
+        for (gv, gd) in zip(gene, self.genes):
+            if gd.is_null(gv) and gd.is_only_nullable_for_filter:
+                to_null.add(gd.key[:-2])
         if len(to_null) > 0:
             for g in self.genes:
                 for v in to_null:
                     if g.is_child_of(v):
                         gene = g.set_null(gene)
-
         return gene
 
     def gene_space(self) -> list[GeneRange]:
@@ -524,7 +541,12 @@ class GeneManager:
                 kwargs = delete_path(kwargs, p)
         return kwargs
 
-    def gene_to_args(self, gene: Gene) -> GeneKwargs:
+    def gene_to_args(self, gene: Gene, *, safeguard: bool = False) -> GeneKwargs:
+        if safeguard:
+            assert self.gene_does_not_mutate(gene), 'Mutation test failed!'
+        return self._gene_to_args(gene)
+
+    def _gene_to_args(self, gene: Gene) -> GeneKwargs:
         t = {}
         for g in self.genes:
             t = g.set_value_from_gene(gene, t)
@@ -532,11 +554,41 @@ class GeneManager:
         return GeneKwargs(**t)
 
 
-    def args_to_gene(self, args: GeneKwargs) -> Gene:
+    def args_to_gene(self, args: GeneKwargs, *, safeguard: bool = False) -> Gene:
+        if safeguard:
+            assert self.gene_does_not_mutate(args), 'Mutation test failed!'
+        return self._args_to_gene(args)
+
+    def _args_to_gene(self, args: GeneKwargs) -> Gene:
         gene = [0] * len(self.genes)
         for g in self.genes:
             gene[g.position] = g.get_gene_value(args)
         return gene
+
+
+    def gene_does_not_mutate(self, gene_or_args: GeneKwargs | Gene) -> bool:
+        if isinstance(gene_or_args, dict):
+            gene = self._args_to_gene(gene_or_args)
+            args = list(gene_or_args.items())
+        else:
+            gene = list(gene_or_args)
+            args = list(self._gene_to_args(gene).items())
+        comp = self._args_to_gene(self._gene_to_args(gene))
+        result = gene == comp
+        if not result:
+            result = True
+            for i, t in enumerate(zip(gene, comp)):
+                a, b = t
+                if a == b or (math.isnan(a) and math.isnan(b)):
+                    continue
+                result = False
+        if not result:
+            print("===ERROR===")
+            print(gene_or_args)
+            print(gene)
+            print(args)
+            print(comp)
+        return result
 
     def gene_is_healthy(self, gene: Gene) -> (bool, list[bool]):
         assert len(gene) == len(self.genes), "Some genes are missing!"
@@ -562,6 +614,8 @@ class GeneManager:
     def get_paths(self) -> list[tuple[str, ...]]:
         return [x.key for x in self.genes]
 
+    def get_hard_genes(self) -> list[GeneDescriptor]:
+        return [g for g in self.genes if g.is_only_nullable_for_filter]
 
 
 _gene_kwargs_map = GeneManager(
@@ -613,6 +667,30 @@ if __name__ == '__main__':
     print(gene2)
     print(gene_manager.gene_is_healthy(gene2))
     print(gene_manager.gene_to_args(gene2))
+
+    reset()
+    gene_manager.set_range("horizontal.factor", [0.5, 1.0, 1.5])
+    gene_manager.set_range("horizontal.h_alpha", [0.5])
+    gene_manager.set_range("horizontal.alpha", [1.0])
+    gene_manager.set_values("horizontal.only_positive_boost", [True])
+
+    gene_manager.set_range("vertical.alpha", [1.0])
+    gene_manager.set_range("vertical.factor", [0.5, 1.0, 1.5])
+    gene_manager.set_values("vertical.only_positive_boost", [True])
+
+    gene_manager.set_range("ngram.boost_lang_a.factor", [0.5, 1.0, 1.5])
+    gene_manager.set_values("ngram.boost_lang_a.only_positive_boost", [True])
+
+    gene_manager.set_range("ngram.boost_lang_b.factor", [0.5, 1.0, 1.5])
+    gene_manager.set_values("ngram.boost_lang_b.only_positive_boost", [True])
+
+    print(gene_manager)
+
+    print(
+        gene_manager._gene_to_args(
+            [1.0, 1, 11, 1.0, 0.5, 0, 4, 2, 0, 2, 4, math.nan, 0, 0, 0, 1, 0, math.nan, 0, 0, 0, 1, 1.0, 1, 0.5, 1, 0, 1]
+        )
+    )
 
     #
     # print(gene_manager.gene_is_healthy(gene))
