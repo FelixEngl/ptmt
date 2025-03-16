@@ -23,14 +23,6 @@ def _fitness_func(ga_instance: pygad.GA, solution: Gene, solution_idx) -> float:
         shared_dir=f"../data/experiment3/shared"
     )
 
-    print(info)
-    fitness = random.random()
-
-    parameter_values.append(solution, fitness)
-
-
-    return fitness
-
     data = run(**cfg)
 
     gp = data.gene_path()
