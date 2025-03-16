@@ -79,8 +79,7 @@ if __name__ == '__main__':
     print(gene_manager)
 
     def _mutate_to_best_known(offspring, ga_instance: pygad.GA):
-        print(offspring)
-        if random.random() < 0.85:
+        if random.random() < 0.80:
             offspring = ga_instance.mutation_randomly(offspring)
         else:
             for i in range(len(offspring)):
@@ -92,6 +91,7 @@ if __name__ == '__main__':
                     if random.random() < 0.025:
                         offspring[i] = gene_manager.clean_gene(offspring[i])
         offspring = np.array([gene_manager.repair_faulty_mutation(o) for o in offspring], dtype=object)
+
         for gene_idx in range(offspring.shape[1]):
             if ga_instance.gene_type[gene_idx][1] is None:
                 offspring[:, gene_idx] = numpy.asarray(offspring[:, gene_idx],
@@ -121,6 +121,7 @@ if __name__ == '__main__':
         num_generations=100,
         fitness_func=_fitness_func,
         num_parents_mating=4,
+        mutation_by_replacement=True,
         on_generation=_on_generation,
         # save_best_solutions=True,
         mutation_type=_mutate_to_best_known
