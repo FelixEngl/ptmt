@@ -349,12 +349,18 @@ class GeneManager:
             providers: list[GeneDescriptor] = None,
             optional_sub: bool = False,
             nullable_paths: list[tuple[str, ...]] | None = None,
+            sort: bool = False,
     ) -> tuple[list[GeneDescriptor], list[tuple[str, ...]] | None]:
         if providers is None:
             providers = []
-        value = inspect.get_annotations(gene_members)
+        member_fields = inspect.get_annotations(gene_members)
 
-        for name, typ in sorted(value.items(), key= lambda x: x[0]):
+        if sort:
+            member_fields = sorted(member_fields.items(), key= lambda x: x[0])
+        else:
+            member_fields = member_fields.items()
+
+        for name, typ in member_fields:
             curr_key = key + (name, )
             is_str = False
             if isinstance(typ, type):
@@ -385,7 +391,16 @@ class GeneManager:
                     if nullable_paths is None:
                         nullable_paths = []
                     nullable_paths.append(curr_key)
-                providers, nullable_paths = GeneManager._to_gene_mapping(typ, enums, kwargs, key=curr_key, providers=providers, optional_sub=is_optional, nullable_paths=nullable_paths)
+                providers, nullable_paths = GeneManager._to_gene_mapping(
+                    typ,
+                    enums,
+                    kwargs,
+                    key=curr_key,
+                    providers=providers,
+                    optional_sub=is_optional,
+                    nullable_paths=nullable_paths,
+                    sort=sort
+                )
                 continue
             else:
                 values = typ
@@ -406,12 +421,12 @@ class GeneManager:
             )
         return providers, nullable_paths
 
-    def __init__(self, gene_members: type, *, enums: list[type] | None = None, kwargs: list[type] | None = None,):
+    def __init__(self, gene_members: type, *, enums: list[type] | None = None, kwargs: list[type] | None = None, sort: bool = False):
         if kwargs is None:
             kwargs = []
         if enums is None:
             enums = []
-        self.genes, self.nullable_paths = GeneManager._to_gene_mapping(gene_members, enums, kwargs)
+        self.genes, self.nullable_paths = GeneManager._to_gene_mapping(gene_members, enums, kwargs, sort=sort)
         v = set(x.key for x in self.genes)
         assert len(v) == len(self.genes), "Some genes have the same key!!!"
         if self.nullable_paths is not None:
@@ -549,7 +564,8 @@ _gene_kwargs_map = GeneManager(
         FDivergence,
         NormalizeMode,
         Idf,
-    ]
+    ],
+    sort=True
 )
 
 gene_manager = _gene_kwargs_map

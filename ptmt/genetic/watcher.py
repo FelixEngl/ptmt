@@ -115,6 +115,7 @@ class GeneWatcher:
 
         if (ma + mi) / 2 < av:
             return av
+
         return ma
 
 
@@ -143,6 +144,9 @@ class GenesWatcher:
 
     def len_of(self, i):
         return len(self.gene[i])
+
+    def create_best_gene(self) -> Gene:
+        return [g.get_best_sep() for g in self.gene]
 
     def __eq__(self, other):
         if len(self.gene) != len(other.gene):

@@ -22,6 +22,15 @@ def _fitness_func(ga_instance: pygad.GA, solution: Gene, solution_idx) -> float:
         clean_translations=True,
         shared_dir=f"../data/experiment3/shared"
     )
+
+    print(info)
+    fitness = random.random()
+
+    parameter_values.append(solution, fitness)
+
+
+    return fitness
+
     data = run(**cfg)
 
     gp = data.gene_path()
@@ -38,7 +47,7 @@ def _fitness_func(ga_instance: pygad.GA, solution: Gene, solution_idx) -> float:
         translation.calculate_ndcg_for(**ndcg_kwargs)
     to_plot = PlotData(data, 3, mark_baselines=True)
     fitness = to_plot.ranking_sorted[0].ndcg_avg
-
+    parameter_values.append(solution, fitness)
     return fitness
 
 
@@ -95,3 +104,5 @@ if __name__ == '__main__':
         pickle.dump(parameter_values, f)
 
     print(gene_manager.gene_type())
+
+    print(parameter_values.create_best_gene())
