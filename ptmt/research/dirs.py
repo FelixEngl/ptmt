@@ -265,6 +265,8 @@ class DataDirectory:
     def rm_is_finished(self):
         self.finished_marker.unlink(missing_ok=True)
 
+    def gene_path(self) -> Path:
+        return self.root_dir / 'gene.pickle'
 
     @property
     def simple_text_view_path(self) -> Path:

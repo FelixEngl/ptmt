@@ -1,11 +1,11 @@
-from os import PathLike
-from pathlib import Path
+import inspect
+import re
 from typing import Optional
 
 import numpy
+import regex
 from ldatranslate.ldatranslate import BoostMethod
 
-from ptmt.create.basic import create_basic_boost_factory
 from ptmt.create.horizontal import HorizontalBoostFactory, HorizontalKwargs, create_horizontal_factory
 from ptmt.create.ngram import NGramBoostKwargs, NGramFactory, create_ngram_language_boost_factory
 from ptmt.create.vertical import VerticalBoostFactory, VerticalKwargs, create_vertical_factory
@@ -61,9 +61,13 @@ def modifier_factory(
 def _single_word(k: str, v: Any) -> str:
     if isinstance(v, float):
         u = f'{v:.4f}'.replace('.', '-')
-    # elif isinstance(v, FDivergence):
-    #     u = str(v)
-    #     u = u[0:min(len(u), 3)]
+    elif v is None:
+        u = '#'
+    elif isinstance(v, bool):
+        if v:
+            u = '+'
+        else:
+            u = '?'
     elif (isinstance(v, MeanMethod)
           or isinstance(v, BoostMethod)
           or isinstance(v, ScoreModifierCalculator)
@@ -88,10 +92,38 @@ def _compact(start: str, info: dict[str, Any] | None) -> str:
     return s1
 
 
-def _uncompact(name: str) -> (str, dict[str, Any] | None):
-    special_values = dict()
+# _re = re.compile(r'(?:bo([a-z]))?([a-z]+)(?:([A-Z]+)|(\d+)-(\d+)|([+?#]))')
+#
+# def _uncompact(target: type, s: str):
+#     if s == '#':
+#         return None
+#     print(f'FOR {target}:')
+#     value = inspect.get_annotations(target)
+#     print(f"{value}")
+#     for match in _re.finditer(s):
+#         if match[0] is not None:
+#             print("BuildSub")
+#             continue
+#         if match
+#
+#         print(match.groups())
+#
+#
+#
+# def read_name(full_name: str) -> (str, Optional[VerticalKwargs], Optional[HorizontalKwargs], Optional[NGramBoostKwargs]):
+#     splitted = tuple(full_name.split('_'))
+#     for v in splitted[1:]:
+#         match v[0]:
+#             case 'V':
+#                 _uncompact(VerticalKwargs, v[1:])
+#             case 'H':
+#                 _uncompact(HorizontalKwargs, v[1:])
+#             case 'N':
+#                 _uncompact(NGramBoostKwargs, v[1:])
 
-
+# if __name__ == '__main__':
+#     n = 'v3_Va1-0000dJf1-0000nNoTsWS_Ha1-0000bPdTf1-5000h0-5000lNmMMMnMoTsN_NboabSf1-0000fNiInNoTbobbMf1-0000fNiInNoT'
+#     read_name(n)
 
 def create_name(
         vertical: Optional[VerticalKwargs] = None,

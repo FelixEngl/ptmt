@@ -1,3 +1,4 @@
+import base64
 import inspect
 import random
 import typing
@@ -6,7 +7,6 @@ import math
 from pprint import pprint
 
 import numpy as np
-import pygad
 from ldatranslate.ldatranslate import *
 
 from ptmt.create.horizontal import HorizontalKwargs
@@ -29,7 +29,7 @@ class GeneDescriptor:
             is_str: bool,
             compatible_types: tuple[type, ...],
     ):
-        self._position: int = position
+        self.position: int = position
         self._range: GeneRange | None = None
         self._range_nullable: GeneRange | None = None
         self.is_enum = is_enum
@@ -180,7 +180,7 @@ class GeneDescriptor:
             return value in r
 
     def gene_is_valid(self, gene: Gene) -> bool:
-        return self.value_in_range(gene[self._position])
+        return self.value_in_range(gene[self.position])
 
     def is_null(self, value: int | float) -> bool:
         return self.read_single_value_to_args(value)[1] is None
@@ -207,7 +207,7 @@ class GeneDescriptor:
             return self.key, self._mapping_ab[value]
 
     def read_from_gene(self, gene: typing.Sequence[int | float]) -> (tuple[str, ...], typing.Any | None):
-        return self.read_single_value_to_args(gene[self._position])
+        return self.read_single_value_to_args(gene[self.position])
 
     def _convert_gene_value(self, value: typing.Any) -> int | float:
         if self._base_type_is_float:
@@ -249,7 +249,7 @@ class GeneDescriptor:
         return str(self)
 
     def __str__(self) -> str:
-        s = f'Gene {self._position} ({self.key} | {self.optional_sub}):'
+        s = f'Gene {self.position} ({self.key} | {self.optional_sub}):'
         s += f'\n  Compatible: {self.compatible_types}'
         s += f'\n  Range: {self._range}'
         if self.is_enum or self.is_bool:
@@ -281,7 +281,7 @@ class GeneDescriptor:
         d = self.null
         if d is None:
             return gene
-        gene[self._position] = d
+        gene[self.position] = d
         return gene
 
 
@@ -353,7 +353,8 @@ class GeneManager:
         if providers is None:
             providers = []
         value = inspect.get_annotations(gene_members)
-        for name, typ in value.items():
+
+        for name, typ in sorted(value.items(), key= lambda x: x[0]):
             curr_key = key + (name, )
             is_str = False
             if isinstance(typ, type):
@@ -454,7 +455,7 @@ class GeneManager:
             value = g.rnd(rnd)
             if g.is_null(value) and g.is_only_nullable_for_filter:
                 to_null.add(g.key[:-2])
-            gene[g._position] = value
+            gene[g.position] = value
         if len(to_null) > 0:
             for g in self.genes:
                 for v in to_null:
@@ -503,14 +504,14 @@ class GeneManager:
     def args_to_gene(self, args: GeneKwargs) -> Gene:
         gene = [0] * len(self.genes)
         for g in self.genes:
-            gene[g._position] = g.get_gene_value(args)
+            gene[g.position] = g.get_gene_value(args)
         return gene
 
     def gene_is_healthy(self, gene: Gene) -> (bool, list[bool]):
         assert len(gene) == len(self.genes), "Some genes are missing!"
         health_values = [None] * len(self.genes)
         for g in self.genes:
-            health_values[g._position] = g.gene_is_valid(gene)
+            health_values[g.position] = g.gene_is_valid(gene)
         return all(health_values), health_values
 
     def gene_type(self) -> list[type]:
@@ -529,6 +530,8 @@ class GeneManager:
 
     def get_paths(self) -> list[tuple[str, ...]]:
         return [x.key for x in self.genes]
+
+
 
 _gene_kwargs_map = GeneManager(
     GeneKwargs,
@@ -550,6 +553,7 @@ _gene_kwargs_map = GeneManager(
 )
 
 gene_manager = _gene_kwargs_map
+
 
 def reset():
     global gene_manager
