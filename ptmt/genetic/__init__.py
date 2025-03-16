@@ -194,11 +194,15 @@ class GeneDescriptor:
                 return self.key, None
             return self.key, value
         elif self.is_enum:
+            if len(self._mapping_ab) <= value:
+                print(f"FAILED: {self.position} for {value}:\n{self}")
             v = self._mapping_ab[value]
             if v is None:
                 return self.key, None
             return self.key, v[1]
         elif self.is_bool:
+            if len(self._mapping_ab) <= value:
+                print(f"FAILED: {self.position} for {value}:\n{self}")
             return self.key, self._mapping_ab[value]
         elif self._base_type_is_int:
             if not self.value_in_range(value):
@@ -544,7 +548,7 @@ class GeneManager:
     def gene_to_args(self, gene: Gene, *, safeguard: bool = False) -> GeneKwargs:
         if safeguard:
             assert self.gene_does_not_mutate(gene), 'Mutation test failed!'
-        return self._gene_to_args(gene)
+        return self._gene_to_args(self.clean_gene(gene))
 
     def _gene_to_args(self, gene: Gene) -> GeneKwargs:
         t = {}

@@ -30,11 +30,11 @@ if __name__ == '__main__':
             shared_dir=f"../data/experiment3/shared"
         )
 
-        # fitness = random.random()
-        #
-        # gene_watcher.append(solution, fitness)
-        #
-        # return fitness
+        fitness = random.random()
+
+        gene_watcher.append(gene_manager.clean_gene(solution), fitness)
+
+        return fitness
 
         data = run(**cfg)
         gp = data.gene_path()
@@ -126,6 +126,8 @@ if __name__ == '__main__':
         # save_best_solutions=True,
         mutation_type=_mutate_to_best_known
     )
+
+    print(gene_manager.gene_space())
 
     ga.run()
     ga.summary()
