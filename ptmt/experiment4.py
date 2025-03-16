@@ -24,7 +24,6 @@ def _fitness_func(ga_instance: pygad.GA, solution: Gene, solution_idx) -> float:
     )
 
     data = run(**cfg)
-
     gp = data.gene_path()
     with gp.open('wb+') as f:
         pickle.dump(gp, f)

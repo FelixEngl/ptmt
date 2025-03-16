@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import pickle
 import typing
 from os import PathLike
 from pathlib import Path
@@ -20,6 +21,7 @@ from ldatranslate import PyStemmingAlgorithm, TokenCountFilter, PyTopicModel, Py
 from ldatranslate.ldatranslate import PyNGramStatistics
 from matplotlib.pyplot import colormaps
 
+from ptmt.genetic import Gene
 from ptmt.research.dirs import DataDirectory
 from ptmt.research.helpers.article_processor_creator import PyAlignedArticleProcessorKwArgs
 from ptmt.research.plotting.generate_plots import MPLColor
@@ -91,6 +93,7 @@ class RunKwargs(typing.TypedDict):
     shared_dir: typing.NotRequired[Path | PathLike | str]
     ngram_statistics: typing.NotRequired[Path | PathLike | str | None | PyNGramStatistics]
     configs: typing.NotRequired[typing.Iterable[TranslationConfig] | Callable[[], typing.Iterable[TranslationConfig]]]
+    gene: typing.NotRequired[Gene]
 
 
 def run(
@@ -107,6 +110,7 @@ def run(
         skip_if_finished_marker_set: bool = True,
         shared_dir: Path | PathLike | str | None = None,
         ngram_statistics: Path | PathLike | str | None | PyNGramStatistics = None,
+        gene: Gene | None = None
 ) -> DataDirectory:
     target_folder = target_folder if isinstance(target_folder, Path) else Path(target_folder)
 
@@ -191,6 +195,13 @@ def run(
         shared_dir=shared_dir,
         ngram_statistics=ngram_statistics
     )
+
+    if gene is not None:
+        for k, v in results.items():
+            gp = v.gene_path()
+            with gp.open('wb+') as f:
+                pickle.dump(gene, f)
+
 
     return results['f']
 

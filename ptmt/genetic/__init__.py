@@ -97,7 +97,6 @@ class GeneDescriptor:
                 self._range_nullable = range(0, 11)
             return
         if self.is_only_nullable_for_filter:
-            print(self.key)
             self._range_nullable = range(0, len(self._mapping_ab))
             if self._mapping_ab[0] is None:
                 self._range = range(1, len(self._mapping_ab))
@@ -180,6 +179,9 @@ class GeneDescriptor:
             return value in r
 
     def gene_is_valid(self, gene: Gene) -> bool:
+        if self.is_only_nullable_for_filter:
+            if self._range_nullable is not None:
+                return gene[self.position] in self._range_nullable
         return self.value_in_range(gene[self.position])
 
     def is_null(self, value: int | float) -> bool:
@@ -249,18 +251,30 @@ class GeneDescriptor:
         return str(self)
 
     def __str__(self) -> str:
-        s = f'Gene {self.position} ({self.key} | {self.optional_sub}):'
+        s = f'Gene {self.position}:'
+        s += f'\n  Key: {self.key}'
+        s += f'\n  Original Nullable: {self.original_is_optional}'
+        s += f'\n  Optional: {self.is_optional}'
+        s += f'\n  Optional Sub: {self.optional_sub}'
+        s += f'\n  Nullable for Filter: {self.is_only_nullable_for_filter}'
         s += f'\n  Compatible: {self.compatible_types}'
         s += f'\n  Range: {self._range}'
-        if self.is_enum or self.is_bool:
+        if self.is_enum:
+            s += f'\n  Enum Values:'
             for i, v in enumerate(self._mapping_ab):
-                s += f"\n  {i}: {v},"
+                s += f"\n    {i}: {v},"
+        elif self.is_bool:
+            s += f'\n  Bool Values:'
+            for i, v in enumerate(self._mapping_ab):
+                s += f"\n    {i}: {v},"
         elif self._base_type_is_float:
-            s += f"\n  FLOAT "
+            s += f'\n  Base Type:'
+            s += f"\n    FLOAT "
             if self.is_optional:
                 s += "(OPT)"
         else:
-            s += f"\n  INT "
+            s += f'\n  Base Type:'
+            s += f"\n    INT "
             if self.is_optional:
                 s += "(OPT)"
         return s
@@ -333,9 +347,9 @@ class GeneDescriptor:
 
 
 class GeneKwargs(typing.TypedDict):
-    horizontal: HorizontalKwargs
-    vertical: VerticalKwargs
-    ngram: NGramBoostKwargs
+    horizontal: typing.NotRequired[HorizontalKwargs]
+    vertical: typing.NotRequired[VerticalKwargs]
+    ngram: typing.NotRequired[NGramBoostKwargs]
 
 
 class GeneManager:
@@ -498,6 +512,8 @@ class GeneManager:
 
         def is_null_on_path(targ: dict[str, dict[str, typing.Any]], path: tuple[str, ...]) -> bool:
             curr = path[0]
+            if curr not in targ:
+                return False
             if len(path) == 1:
                 return targ[curr] is None
             else:
@@ -588,6 +604,16 @@ if __name__ == '__main__':
 
     gene2 = gene_manager.args_to_gene(kwargs)
     print(gene2)
+
+    gene2 = gene_manager.args_to_gene(GeneKwargs(
+        horizontal=None,
+        vertical=None,
+        ngram=None,
+    ))
+    print(gene2)
+    print(gene_manager.gene_is_healthy(gene2))
+    print(gene_manager.gene_to_args(gene2))
+
     #
     # print(gene_manager.gene_is_healthy(gene))
     # print(gene_manager.gene_is_healthy(gene2))

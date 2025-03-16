@@ -18,6 +18,7 @@ from typing import Callable
 
 from ptmt.create.basic import create_basic_boost_factory
 from ptmt.experiment2_support.functions import *
+from ptmt.genetic import gene_manager, GeneKwargs, Gene
 from ptmt.research.protocols import TranslationConfig
 from ptmt.research.tmt1.configs import create_configs
 from ptmt.research.tmt1.run import run, RunKwargs
@@ -35,7 +36,18 @@ def create_run(
         clean_translations: bool = False,
         configs: typing.Iterable[TranslationConfig] | Callable[[], typing.Iterable[TranslationConfig]] | None = None,
         shared_dir: Path | PathLike | str | None = None,
+        gene: Gene | None = None
 ) -> tuple[dict[str, Any], RunKwargs]:
+
+    if gene is None:
+        gene = gene_manager.args_to_gene(
+            GeneKwargs(
+                horizontal=horizontal,
+                vertical=vertical,
+                ngram=ngram,
+            )
+        )
+
     a, b, c = create_name(vertical, horizontal, ngram)
     name = f'{name}_{a}_{b}_{c}'
     targ = {
@@ -88,7 +100,8 @@ def create_run(
         skip_if_finished_marker_set=True,
         shared_dir=shared_dir,
         ngram_statistics=ngram_statistics,
-        configs=configs
+        configs=configs,
+        gene=gene
     )
 
 

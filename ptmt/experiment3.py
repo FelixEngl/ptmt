@@ -1,9 +1,12 @@
 import csv
+import pickle
 import pprint
+from pathlib import Path
 from typing import Callable
 
 from ptmt.experiment2 import create_run
 from ptmt.experiment2_support.functions import *
+from ptmt.genetic import gene_manager, GeneKwargs
 from ptmt.research.dirs import DataDirectory
 from ptmt.research.plotting.plot_data import PlotData
 from ptmt.research.protocols import TranslationConfig
@@ -37,6 +40,18 @@ for i, hvn in enumerate(itertools.chain(
 
     if not data.is_finished():
         continue
+
+    gene = gene_manager.args_to_gene(
+        GeneKwargs(
+            horizontal=horizontal,
+            vertical=vertical,
+            ngram=ngram,
+        )
+    )
+    gp = data.gene_path()
+    with gp.open('wb+') as f:
+        pickle.dump(gene, f)
+
 
     ndcg_kwargs = { "top_n_weigts": (3, 2, 1) }
 
