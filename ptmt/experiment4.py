@@ -17,9 +17,10 @@ from ptmt.research.tmt1.run import run
 if __name__ == '__main__':
 
     gene_watcher: GenesWatcher = GenesWatcher(len(gene_manager))
-
+    error_count = 0
 
     def _fitness_func(ga_instance: pygad.GA, solution: Gene, solution_idx) -> float:
+        global error_count
         info, cfg = create_run(
             "v3",
             "experiment6",
@@ -30,32 +31,35 @@ if __name__ == '__main__':
             shared_dir=f"../data/experiment3/shared"
         )
 
-        fitness = random.random()
+        # fitness = random.random()
+        #
+        # gene_watcher.append(gene_manager.clean_gene(solution), fitness)
+        #
+        # return fitness
 
-        gene_watcher.append(gene_manager.clean_gene(solution), fitness)
+        print(f"Gene {solution}")
 
-        return fitness
-
-        data = run(**cfg)
-        gp = data.gene_path()
-        with gp.open('wb+') as f:
-            pickle.dump(gp, f)
-
-        ndcg_kwargs = {"top_n_weigts": (3, 2, 1)}
-        if ndcg_kwargs is None:
-            ndcg_kwargs: NDCGKwArgs = NDCGKwArgs()
-        ndcg_kwargs.setdefault("top_n_weigts", (1, 1, 1))
-        ndcg_kwargs.setdefault("save", True)
-        ndcg_kwargs.setdefault("ignore_existing_file", False)
-        for translation in data.iter_all_translations():
-            translation.calculate_ndcg_for(**ndcg_kwargs)
-        to_plot = PlotData(data, 3, mark_baselines=True)
-        fitness = to_plot.ranking_sorted[0].ndcg_avg
-        gene_watcher.append(solution, fitness)
-        return fitness
-
-
-
+        try:
+            data = run(**cfg)
+            gp = data.gene_path()
+            with gp.open('wb+') as f:
+                pickle.dump(list(solution), f)
+            ndcg_kwargs = {"top_n_weigts": (3, 2, 1)}
+            if ndcg_kwargs is None:
+                ndcg_kwargs: NDCGKwArgs = NDCGKwArgs()
+            ndcg_kwargs.setdefault("top_n_weigts", (1, 1, 1))
+            ndcg_kwargs.setdefault("save", True)
+            ndcg_kwargs.setdefault("ignore_existing_file", False)
+            for translation in data.iter_all_translations():
+                translation.calculate_ndcg_for(**ndcg_kwargs)
+            to_plot = PlotData(data, 3, mark_baselines=True)
+            fitness = to_plot.ranking_sorted[0].ndcg_avg
+            gene_watcher.append(solution, fitness)
+            return fitness
+        except BaseException as e:
+            error_count += 1
+            print(e)
+            return 0.0
 
 
     gene_manager.set_range("horizontal.factor", [0.5, 1.0, 1.5])
@@ -105,12 +109,19 @@ if __name__ == '__main__':
 
 
     def _on_generation(ga_instance: pygad.GA):
-        print(f"Next Generation: {len(ga_instance.population)}")
+        print(f"Next Generation pop size: {len(ga_instance.population)}")
+        for i in range(len(ga_instance.population)):
+            fitness = ga_instance.solutions_fitness[i]
+            if fitness <= 0.00001:
+                print(f'Dies out: {ga_instance.population[i]}')
+                ga_instance.population[i] = numpy.array(gene_manager.rnd() ,dtype=object)
+
         if random.random() < 0.1:
             print(f"Add very best by random.")
             print(ga_instance.population)
-            ga_instance.population += numpy.array(gene_watcher.create_best_gene(),dtype=object)
-            print(ga_instance.population)
+            ga_instance.population += numpy.array(gene_watcher.create_best_gene() ,dtype=object)
+            print(f'New pop size: {len(ga_instance.population)}')
+
 
     ga = pygad.GA(
         gene_space=gene_manager.gene_space(),
@@ -118,7 +129,7 @@ if __name__ == '__main__':
         gene_type=gene_manager.gene_type(),
         allow_duplicate_genes=True,
         initial_population=[gene_manager.rnd() for _ in range(0, 10)],
-        num_generations=100,
+        num_generations=20,
         fitness_func=_fitness_func,
         num_parents_mating=4,
         mutation_by_replacement=True,
@@ -138,3 +149,4 @@ if __name__ == '__main__':
     print(gene_manager.gene_type())
 
     print(gene_watcher.create_best_gene())
+

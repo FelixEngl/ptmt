@@ -36,7 +36,8 @@ def create_run(
         clean_translations: bool = False,
         configs: typing.Iterable[TranslationConfig] | Callable[[], typing.Iterable[TranslationConfig]] | None = None,
         shared_dir: Path | PathLike | str | None = None,
-        gene: Gene | None = None
+        gene: Gene | None = None,
+        min_not_nan: int | float | None = None,
 ) -> tuple[dict[str, Any], RunKwargs]:
 
     if gene is None:
@@ -101,7 +102,8 @@ def create_run(
         shared_dir=shared_dir,
         ngram_statistics=ngram_statistics,
         configs=configs,
-        gene=gene
+        gene=gene,
+        min_not_nan=min_not_nan
     )
 
 
