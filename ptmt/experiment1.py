@@ -22,13 +22,13 @@ if __name__ == '__main__':
         target_folder="../data/experiment1",
         path_to_original_dictionary="../data/final_dict/dictionary_20241130_proc3.dat.zst",
         path_to_raw_data="../data/aligned_articles_corpus/wikicomp-2014_deen.xml.bz2",
-        temp_folder=r'E:\tmp\TempGen'
+        temp_folder=r'C:\Users\felix\tmp'
     )
 
-    run(
-        experiment_name="normal",
-        target_folder="../data/experiment1_short",
-        path_to_original_dictionary="../data/final_dict/dictionary_20241130_proc4.dat.zst",
-        path_to_raw_data="../data/aligned_articles_corpus/wikicomp-2014_deen.xml.bz2",
-        temp_folder=r'E:\tmp\TempGen'
-    )
+    # run(
+    #     experiment_name="normal",
+    #     target_folder="../data/experiment1_short",
+    #     path_to_original_dictionary="../data/final_dict/dictionary_20241130_proc4.dat.zst",
+    #     path_to_raw_data="../data/aligned_articles_corpus/wikicomp-2014_deen.xml.bz2",
+    #     temp_folder=r'E:\tmp\TempGen'
+    # )

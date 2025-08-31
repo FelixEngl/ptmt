@@ -36,6 +36,7 @@ def process_data(
     if isinstance(processor, dict):
         processor = create_processor(**processor)
 
+    print(f'Temp Folder: {tmp_folder}')
     options = StoreOptions()
     options.temp_folder = tmp_folder
     options.delete_temp_files_immediately = False
@@ -86,13 +87,14 @@ def make_dictionary(
         path_to_data: Path | PathLike | str,
         output_path_phrases: Path | PathLike | str | None,
         output_path: Path | PathLike | str | None,
-        processor_kwargs: PyAlignedArticleProcessorKwArgs,
+        processor_kwargs: PyAlignedArticleProcessorKwArgs | PyAlignedArticleProcessor,
         tmp_folder: None | Path | PathLike | str = None,
         token_filter: TokenCountFilter | None = None,
 ) -> PyDictionary:
     if not isinstance(dictionary_path, Path):
         dictionary_path = Path(dictionary_path)
     if not dictionary_path.exists():
+        dictionary_path.parent.mkdir(parents=True, exist_ok=True)
         print(f"Create dict at: {dictionary_path}")
         dictionary, _ = create_dictionary(
             lang_a,

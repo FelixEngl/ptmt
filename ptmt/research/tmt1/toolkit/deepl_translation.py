@@ -13,28 +13,33 @@
 # limitations under the License.
 
 import typing
+from typing import Optional
 from os import PathLike
 from pathlib import Path
 
 import jsonpickle
-from ldatranslate import PyDictionary, PyAlignedArticleProcessor, LanguageHint
+from deepl import Formality, GlossaryInfo
+from ldatranslate import PyDictionary, PyAlignedArticleProcessor, LanguageHint, PyTopicModel, PyVocabulary
+from numpy.lib.function_base import quantile
 
 from ptmt.research.dirs import DataDirectory
 from ptmt.research.lda_model import create_ratings
 from ptmt.research.tmt1.toolkit.simple_processing import _process_token_list
 from ptmt.research.tmt1.toolkit.test_data_load_helper import load_test_data
 
+import deepl
 
 def deepl_translate(
         original_dictionary: PyDictionary,
         paper_dir: DataDirectory,
-        translate_mode: typing.Literal["simple", "complex"],
+        translate_mode: typing.Literal["simple", "complex", "API"], # simple and complex are only for test purposes
         processor: PyAlignedArticleProcessor,
         language_hint: LanguageHint | str,
         test_data: Path | PathLike | str,
         limit: int | None,
+        deepl_api_key: str | None = None,
 ):
-    if (deepl := paper_dir.deepl_if_exists()) is not None and deepl.model_path.exists():
+    if (deepl_exists := paper_dir.deepl_if_exists()) is not None and deepl_exists.model_path.exists():
         print("Deepl Translation exists!")
         return
     model = paper_dir.load_original_py_model()
@@ -57,7 +62,66 @@ def deepl_translate(
     result_folder.mkdir(exist_ok=True)
     reconstructed: list[str] | list[list[str]]
 
+    deepl_dictionary: PyDictionary = PyDictionary(None, None)
+    # TODO: Add fixed API on a later date
     match translate_mode:
+        case "API":
+            if deepl_api_key is None:
+                raise ValueError("No API key provided!")
+            translator: deepl.Translator = deepl.Translator(deepl_api_key)
+            reconstructed = []
+            # Dry run to make sure we do not waste money
+            for k in range(model.k):
+                topic: list[tuple[int, str, float]] | None = model.get_topic_as_words(k)
+                assert topic is not None, "Was not able to find a topic"
+                assert all(isinstance(x[0], str) and isinstance(x[1], float) for x in topic), "Something is wrong with the data"
+            builder = PyTopicModel.builder()
+
+            for k in range(model.k):
+                topic: list[tuple[int, str, float]] | None = model.get_words_of_topic_sorted(k)
+                context_prob = quantile([x[2] for x in topic], 0.80)
+                context = ', '.join(x[1] for x in topic if x[2] >= context_prob)
+
+                for idx, entry in enumerate(topic):
+                    word_id, word, probability = entry
+                    res = idx, word_id, probability
+                    meta = original_dictionary.get_meta_b_of(word)
+                    if meta is None:
+                        continue
+                    # counts = dict(k: 0 for k, v in meta.unclassified[1].items())
+                    if (found := original_dictionary.get_translation_b_to_a(word)) is not None and len(found) > 0:
+                        current = None
+                        for value in found:
+                            unaltered_words_counts: tuple[Optional[set[tuple[str, int]]], Optional[dict[str, set[tuple[str, int]]]]] \
+                                = original_dictionary.get_meta_a_of(word).unclassified_py
+
+                            max_ct = unaltered_words_counts[0]
+
+
+
+                            if current is None:
+                                current = value, int()
+                            else:
+                                other = int(original_dictionary.get_meta_b_of(value).subjects[0])
+                                if current[1] < other:
+                                    current = value, other
+                        # topic_mapping[idx] = res
+                        # f.write(f"- {current[0]}.\n")
+                    else:
+                        print(f"Failed for {entry}!!!!")
+
+                for word, prob in topic:
+                    translator.translate_text(
+                        word,
+                        source_lang='DE',
+                        target_lang='EN',
+                        formality=Formality.DEFAULT,
+                        glossary=None,
+                        filename=f"{word}.txt",
+                        output_format="txt"
+                    )
+
+                to_translate = deepl_to_translate_path / f"topic_{k}.txt"
         case "simple":
             to_translate = deepl_to_translate_path / f"word.txt"
             ct = None

@@ -34,13 +34,13 @@ from ptmt.corpus_extraction.parallel_wiki.raw_article import RawArticlePair, ext
 
 from split_file_reader import SplitFileReader
 
+T = typing.TypeVar('T')
 
-def _read_split_tar_wikicomp(path: str | Path | PathLike[str], consumer: typing.Callable[[typing.TextIO | typing.BinaryIO], Iterator[RawArticlePair]]) -> Iterator[RawArticlePair]:
+def _read_split_tar_wikicomp(path: str | Path | PathLike[str], consumer: typing.Callable[[typing.TextIO | typing.BinaryIO], Iterator[T]]) -> Iterator[T]:
     if not isinstance(path, Path):
         path = Path(path)
     if path.suffix.endswith('bz2'):
-        with bz2.open(path, 'rt', encoding='UTF-8', newline='\n') as f:
-            yield from consumer(f)
+        yield from consumer(bz2.open(path,  mode='rt', encoding='UTF-8', newline='\n'))
     else:
         with SplitFileReader(glob.glob(str(path.absolute()) + ".*")) as sp:
             with tarfile.open(fileobj=sp, mode="r") as tar:
@@ -98,7 +98,7 @@ def read_chunk_wise(path: str | PathLike[str] | Path) -> Iterator[RawArticlePair
     """
     Reads the data chunkwise, more robust than the whole thing.
     """
-    def _read(f):
+    def _read(f: typing.TextIO | typing.BinaryIO):
         in_pair = False
         col = []
         ct = 0
@@ -107,6 +107,7 @@ def read_chunk_wise(path: str | PathLike[str] | Path) -> Iterator[RawArticlePair
 
             if len(line) == 0:
                 print(f"End reached: {ct} [{f.readline()}]")
+                f.close()
                 break
             if '<articlePair' in line:
                 in_pair = True
@@ -143,6 +144,25 @@ def read_chunk_wise(path: str | PathLike[str] | Path) -> Iterator[RawArticlePair
     yield from _read_split_tar_wikicomp(path, _read)
 
 
+def _health_check(inp: str | PathLike[str] | Path):
+    def _read_lines(f: typing.TextIO | typing.BinaryIO):
+        ct = 0
+        while True:
+            try:
+                line = f.readline()
+            except BaseException as e:
+                print(f"Error: {e}")
+                break
+            ct += 1
+            if len(line) == 0:
+                print(f"End reached: {ct} [{f.readline()}]")
+                break
+            yield line
+    last = None
+    for v in enumerate(_read_split_tar_wikicomp(inp, _read_lines)):
+        last = v
+    print(f"Last: {last}")
+
 def extract_wikicomp_into(
         inp: str | PathLike[str] | Path,
         save_path: str | PathLike[str] | Path = 'preprocessed/wikicomp-2014_deen.bulkjson',
@@ -159,6 +179,10 @@ def extract_wikicomp_into(
         save_path_categories = Path(save_path_categories)
     save_path.parent.mkdir(parents=True, exist_ok=True)
     save_path_categories.parent.mkdir(parents=True, exist_ok=True)
+
+    # print("Doing a health check!")
+    # _health_check(inp)
+
     print(f"Start parsing {inp}")
     cat_sup = CategorySupplier()
     ct_list = 0

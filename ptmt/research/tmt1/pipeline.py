@@ -37,7 +37,7 @@ from ptmt.research.protocols import TranslationConfig
 from ptmt.research.tmt1.configs import create_configs
 from ptmt.research.tmt1.toolkit.coherences import calculate_coocurrences
 from ptmt.research.tmt1.toolkit.data_creator import create_train_data
-from ptmt.research.tmt1.toolkit.deepl import deepl_translate
+from ptmt.research.tmt1.toolkit.deepl_translation import deepl_translate
 from ptmt.research.tmt1.toolkit.dictionary_creation import make_dictionary
 from ptmt.research.tmt1.toolkit.model_training import train_models
 from ptmt.research.tmt1.toolkit.model_translation import SINGLE_FILTER, translate_models

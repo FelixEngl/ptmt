@@ -53,8 +53,8 @@ def create_unstemm_dictionary(
         p, ct = max(value.items(), key=operator.itemgetter(1))
         p: str
         new_dictionary.add(
-            (o, LoadedMetadataEx({MetaField.Unclassified: (f"ct#{ct}", 1)})),
-            (p, None)
+            (o, None),
+            (p, LoadedMetadataEx({MetaField.Unclassified: {o: ("ct", ct)}}))
         )
     new_dictionary.save(path_to_dict)
     return new_dictionary
