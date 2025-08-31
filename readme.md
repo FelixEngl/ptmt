@@ -1,5 +1,7 @@
 # Python Topic Model Translation (PTMT)
 
+> Please Note: Currently the code is broken due some API changes in requirements of the Rust implementation. I'll will fix the issues in the upcomming months.
+
 This repository contains our experiments for topic model translation.
 The contents may change over time.
 
