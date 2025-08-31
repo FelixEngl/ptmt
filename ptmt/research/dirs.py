@@ -43,9 +43,10 @@ NDCG = tuple[
 
 
 class CoherencesDir:
-    def __init__(self, root_dir: Path):
+    def __init__(self, root_dir: Path, init_dir: bool = True):
         self._root_dir = root_dir
-        self._root_dir.mkdir(exist_ok=True, parents=True)
+        if init_dir:
+            self._root_dir.mkdir(exist_ok=True, parents=True)
 
     @property
     def root_dir(self) -> Path:
@@ -243,16 +244,19 @@ def sizeof_fmt(num, suffix="B"):
 
 
 class DataDirectory:
-    def __init__(self, root_dir: Path | str | os.PathLike, global_model_dir: Path | os.PathLike | str | None = None,):
+    def __init__(self, root_dir: Path | str | os.PathLike, global_model_dir: Path | os.PathLike | str | None = None,
+                 init_folders: bool = True ):
         if not isinstance(root_dir, Path):
             root_dir = Path(root_dir).absolute()
-        root_dir.mkdir(parents=True, exist_ok=True)
-        (root_dir / "translation").mkdir(parents=True, exist_ok=True)
+
+        if init_folders:
+            root_dir.mkdir(parents=True, exist_ok=True)
+            (root_dir / "translation").mkdir(parents=True, exist_ok=True)
         self.root_dir = root_dir
         self.model_cache: None | tuple[LDAModel, PyTopicModel] = None
         self._lazy_cache = dict()
         self._corpus = dict()
-        self._coherences = CoherencesDir(self.root_dir / "coherences")
+        self._coherences = CoherencesDir(self.root_dir / "coherences", init_dir=init_folders)
         self.finished_marker = root_dir / "finished.dummy"
         self.global_model_dir = global_model_dir
 

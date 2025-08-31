@@ -13,6 +13,8 @@
 # limitations under the License.
 
 import functools
+import itertools
+import math
 import typing
 from os import PathLike
 from pathlib import Path
@@ -56,6 +58,41 @@ class ExtendedConfigCreator:
 
 
 
+class DefectModelError(Exception):
+    pass
+
+def _check_nans(translated: ldatranslate.PyTopicModel, min_not_nan: int | float | None):
+    def check_int(ct: int):
+        for i in range(translated.k):
+            ct2 = 0
+            for x in translated.get_topic(i):
+                if not math.isnan(x) and not math.isinf(x):
+                    ct2 += 1
+            if ct2 < ct:
+                raise DefectModelError()
+
+    def calc_float(perc: float):
+        counts = None
+        for i in range(translated.k):
+            topic = translated.get_topic(i)
+            expected = int(math.ceil(len(topic) * perc))
+            if counts is None:
+                counts = expected
+            else:
+                counts = min(counts, expected)
+        check_int(counts)
+
+    match min_not_nan:
+        case int(ct):
+            check_int(ct)
+        case float(perc) if 0.0 <= perc <= 1.0:
+            calc_float(perc)
+        case float(perc) if 0.0 <= perc <= 100.0:
+            calc_float(min(1.0, perc / 100.0))
+        case None:
+            return
+        case v:
+            raise ValueError(f"Value {v} is not supported!")
 
 def translate_models(
     lang_a: str,
@@ -67,7 +104,8 @@ def translate_models(
     limit: int | None,
     filters: tuple[SINGLE_FILTER, SINGLE_FILTER] | None,
     configs: typing.Collection[TranslationConfig] | Callable[[], typing.Collection[TranslationConfig]],
-    config_modifier: Callable[[TranslationConfig, ldatranslate.PyTopicModel, PyDictionary], ldatranslate.PyTranslationConfig] | None
+    config_modifier: Callable[[TranslationConfig, ldatranslate.PyTopicModel, PyDictionary], ldatranslate.PyTranslationConfig] | None,
+    min_not_nan: int | float | None = None,
 ):
     if callable(configs):
         my_configs = configs()
@@ -162,7 +200,8 @@ def translate_models(
         cfg_json.write_text(config_pickle)
         print("Save translation.")
         translated.save_binary(targ.model_path)
-        translated.show_top(10)
+        _check_nans(translated, min_not_nan)
+        # translated.show_top(10)
         print("Create ratings.")
         b_ratings = create_ratings(translated, original_model.alpha, 0.01, b_data)
         assert len(b_ratings) == len(b_data)

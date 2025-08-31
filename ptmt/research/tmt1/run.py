@@ -26,7 +26,7 @@ from ptmt.research.dirs import DataDirectory
 from ptmt.research.helpers.article_processor_creator import PyAlignedArticleProcessorKwArgs
 from ptmt.research.plotting.generate_plots import MPLColor
 from ptmt.research.protocols import TranslationConfig
-from ptmt.research.tmt1.pipeline import run_pipeline, LinePlotKWArgs, BarPlotKWArgs
+from ptmt.research.tmt1.pipeline import run_pipeline, LinePlotKWArgs, BarPlotKWArgs, PipelineError
 from ptmt.research.tmt1.toolkit.test_ids import test_ids
 from ptmt.toolkit.stopwords import get_stop_words
 
@@ -94,7 +94,13 @@ class RunKwargs(typing.TypedDict):
     ngram_statistics: typing.NotRequired[Path | PathLike | str | None | PyNGramStatistics]
     configs: typing.NotRequired[typing.Iterable[TranslationConfig] | Callable[[], typing.Iterable[TranslationConfig]]]
     gene: typing.NotRequired[Gene]
+    min_not_nan: typing.NotRequired[int | float]
 
+
+class RunError(Exception):
+    def __init__(self, error: PipelineError, payload: DataDirectory | None):
+        self.error = error
+        self.payload = payload
 
 def run(
         experiment_name: str,
@@ -110,7 +116,8 @@ def run(
         skip_if_finished_marker_set: bool = True,
         shared_dir: Path | PathLike | str | None = None,
         ngram_statistics: Path | PathLike | str | None | PyNGramStatistics = None,
-        gene: Gene | None = None
+        gene: Gene | None = None,
+        min_not_nan: int | float | None = None,
 ) -> DataDirectory:
     target_folder = target_folder if isinstance(target_folder, Path) else Path(target_folder)
 
@@ -156,45 +163,50 @@ def run(
 
     # if highlight is None:
     #     highlight = ("P5", "G5", "P3", "M3", "C5*", "B3*")
-
-    results = run_pipeline(
-        experiment_name,
-        "en",
-        "de",
-        path_to_extracted_data,
-        target_folder, # root_dir
-        path_to_original_dictionary,
-        "my_dictionary.dat.zst",
-        "f",
-        test_ids,
-        default_processor_kwargs,
-        TokenCountFilter(50, 1000),
-        temp_folder,
-        1000,
-        deepl,
-        mark_baselines=True,
-        generate_Excel=False,
-        ndcg_kwargs={
-            "top_n_weigts": (3, 2, 1)
-        },
-        line_plot_args=LinePlotKWArgs(
-            colors=colormaps.get("prism")
-        ),
-        bar_plot_args=BarPlotKWArgs(
-            highlight= highlight,
-            label_rotation=270,
-            y_label_rotation=270,
-            y_label_labelpad=20,
-            label_colors=color_provider3
-        ),
-        coocurences_kwargs=False,
-        configs = configs,
-        config_modifier=config_modifier,
-        clean_translations=clean_translations,
-        skip_if_finished_marker_set=skip_if_finished_marker_set,
-        shared_dir=shared_dir,
-        ngram_statistics=ngram_statistics
-    )
+    error = None
+    try:
+        results = run_pipeline(
+            experiment_name,
+            "en",
+            "de",
+            path_to_extracted_data,
+            target_folder,  # root_dir
+            path_to_original_dictionary,
+            "my_dictionary.dat.zst",
+            "f",
+            test_ids,
+            default_processor_kwargs,
+            TokenCountFilter(50, 1000),
+            temp_folder,
+            1000,
+            deepl,
+            mark_baselines=True,
+            generate_Excel=False,
+            ndcg_kwargs={
+                "top_n_weigts": (3, 2, 1)
+            },
+            line_plot_args=LinePlotKWArgs(
+                colors=colormaps.get("prism")
+            ),
+            bar_plot_args=BarPlotKWArgs(
+                highlight=highlight,
+                label_rotation=270,
+                y_label_rotation=270,
+                y_label_labelpad=20,
+                label_colors=color_provider3
+            ),
+            coocurences_kwargs=False,
+            configs=configs,
+            config_modifier=config_modifier,
+            clean_translations=clean_translations,
+            skip_if_finished_marker_set=skip_if_finished_marker_set,
+            shared_dir=shared_dir,
+            ngram_statistics=ngram_statistics,
+            min_not_nan=min_not_nan
+        )
+    except PipelineError as e:
+        error = e
+        results = e.payload
 
     if gene is not None:
         for k, v in results.items():
@@ -202,6 +214,11 @@ def run(
             with gp.open('wb+') as f:
                 pickle.dump(gene, f)
 
+    if error is not None:
+        raise RunError(
+            error,
+            results.get('f', None)
+        )
 
     return results['f']
 

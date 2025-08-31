@@ -40,7 +40,7 @@ from ptmt.research.tmt1.toolkit.data_creator import create_train_data
 from ptmt.research.tmt1.toolkit.deepl_translation import deepl_translate
 from ptmt.research.tmt1.toolkit.dictionary_creation import make_dictionary
 from ptmt.research.tmt1.toolkit.model_training import train_models
-from ptmt.research.tmt1.toolkit.model_translation import SINGLE_FILTER, translate_models
+from ptmt.research.tmt1.toolkit.model_translation import SINGLE_FILTER, translate_models, DefectModelError
 from ptmt.research.tmt1.toolkit.tables import output_table
 from ptmt.research.tmt1.toolkit.unstemm_dict_creation import create_unstemm_dictionary
 
@@ -117,6 +117,7 @@ class _RunSingleKWArgs(TypedDict):
     clean_translation: bool
     skip_if_finished_marker_set: bool
     ngram_statistics: PyNGramStatistics | None
+    min_not_nan: int | float | None
 
 
 
@@ -161,6 +162,7 @@ def run_single(
         clean_translation: bool,
         skip_if_finished_marker_set: bool,
         ngram_statistics: PyNGramStatistics | None,
+        min_not_nan: int | float | None
 ) -> DataDirectory:
     if skip_if_finished_marker_set and data_dir.is_finished():
         print(f"{data_dir.root_dir} is already finished.")
@@ -202,18 +204,24 @@ def run_single(
         deepl_translate(o_dict, data_dir, translate_mode, processor, lang_b, test, limit)
 
     print("Finished training model\nStart translating")
-    translate_models(
-        lang_a,
-        lang_b,
-        data_dir,
-        dictionary,
-        ngram_statistics,
-        test,
-        limit,
-        filters,
-        configs=configs,
-        config_modifier=config_modifier,
-    )
+    try:
+        translate_models(
+            lang_a,
+            lang_b,
+            data_dir,
+            dictionary,
+            ngram_statistics,
+            test,
+            limit,
+            filters,
+            configs=configs,
+            config_modifier=config_modifier,
+            min_not_nan=min_not_nan
+        )
+    except DefectModelError as e:
+        print("The confiuration failed to translate the topic model properly!")
+        data_dir.mark_as_finished()
+        raise e
     print("Finished translating models")
 
 
@@ -457,6 +465,10 @@ _TestIdType = typing.Iterable[int] | float | Fraction | str | Path | os.PathLike
 class DictionaryKwArgs(TypedDict, total=True):
     name_suffix: str
 
+class PipelineError(Exception):
+    def __init__(self, sub_errors: list[tuple[str, DefectModelError]], payload: dict[str, DataDirectory]):
+        self.sub_errors = sub_errors
+        self.payload = payload
 
 
 def run_pipeline(
@@ -488,6 +500,7 @@ def run_pipeline(
         skip_if_finished_marker_set: bool = True,
         shared_dir: Path | PathLike | str | None = None,
         ngram_statistics: Path | PathLike | str | None | PyNGramStatistics = None,
+        min_not_nan: int | float | None = None,
 ) -> dict[str, DataDirectory]:
     """
 
@@ -675,15 +688,21 @@ def run_pipeline(
         config_modifier=config_modifier,
         clean_translation=clean_translations,
         skip_if_finished_marker_set=skip_if_finished_marker_set,
-        ngram_statistics=ngram_statistics
+        ngram_statistics=ngram_statistics,
+        min_not_nan=min_not_nan
     )
 
+    error = []
+
     if docs is not None:
-        docs = run_single(
-            "no_phrases",
-            docs,
-            **args
-        )
+        try:
+            docs = run_single(
+                "no_phrases",
+                docs,
+                **args
+            )
+        except DefectModelError as e:
+            error.append(("no_phrases", e))
 
     if docs_filtered is not None:
         def _filter_a1(word: str, _: LoadedMetadataEx | None) -> bool:
@@ -707,7 +726,10 @@ def run_pipeline(
 
         args_copy = dict(args)
         args_copy["filters"] = ((_filter_a1, _filter_a1), (_filter_a2, _filter_a2))
-        docs_filtered = run_single("filtered_dict", docs_filtered, **args_copy)
+        try:
+            docs_filtered = run_single("filtered_dict", docs_filtered, **args_copy)
+        except DefectModelError as e:
+            error.append(("filtered_dict", e))
 
     if docs_filtered_phrase is not None:
         def _filter_a1(word: str, _: LoadedMetadataEx | None) -> bool:
@@ -731,16 +753,24 @@ def run_pipeline(
 
         args_copy = dict(args)
         args_copy["filters"] = ((_filter_a1, _filter_a1), (_filter_a2, _filter_a2))
-        docs_filtered_phrase = run_single("filtered_dict_no_phrase", docs_filtered_phrase, **args_copy)
+        try:
+            docs_filtered_phrase = run_single("filtered_dict_no_phrase", docs_filtered_phrase, **args_copy)
+        except DefectModelError as e:
+            error.append(("filtered_dict_no_phrase", e))
 
     if docs_phrases is not None:
         args_copy = dict(args)
         args_copy["processor"] = create_processor(**processor_kwargs, phrases_a=dictionary.voc_a, phrases_b=dictionary.voc_b)
-        docs_phrases = run_single(
+        try:
+            docs_phrases = run_single(
             "phrases",
-            docs_phrases,
-            **args_copy
-        )
+                docs_phrases,
+                **args_copy
+            )
+        except DefectModelError as e:
+            error.append(("phrases", e))
+
+
 
     if docs_phrases is not None:
         result_dicts['p'] = docs_phrases
@@ -750,4 +780,6 @@ def run_pipeline(
         result_dicts['f'] = docs_filtered
     if docs_filtered_phrase is not None:
         result_dicts['m'] = docs_filtered_phrase
+    if len(error) > 0:
+        raise PipelineError(error, result_dicts)
     return result_dicts

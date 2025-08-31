@@ -17,9 +17,10 @@ from ptmt.research.tmt1.run import run
 if __name__ == '__main__':
 
     gene_watcher: GenesWatcher = GenesWatcher(len(gene_manager))
-
+    error_count = 0
 
     def _fitness_func(ga_instance: pygad.GA, solution: Gene, solution_idx) -> float:
+        global error_count
         info, cfg = create_run(
             "v3",
             "experiment6",
@@ -30,11 +31,11 @@ if __name__ == '__main__':
             shared_dir=f"../data/experiment3/shared"
         )
 
-        fitness = random.random()
-
-        gene_watcher.append(solution, fitness)
-
-        return fitness
+        # fitness = random.random()
+        #
+        # gene_watcher.append(solution, fitness)
+        #
+        # return fitness
 
         data = run(**cfg)
         gp = data.gene_path()
@@ -105,12 +106,19 @@ if __name__ == '__main__':
 
 
     def _on_generation(ga_instance: pygad.GA):
-        print(f"Next Generation: {len(ga_instance.population)}")
+        print(f"Next Generation pop size: {len(ga_instance.population)}")
+        for i in range(len(ga_instance.population)):
+            fitness = ga_instance.solutions_fitness[i]
+            if fitness <= 0.00001:
+                print(f'Dies out: {ga_instance.population[i]}')
+                ga_instance.population[i] = numpy.array(gene_manager.rnd() ,dtype=object)
+
         if random.random() < 0.1:
             print(f"Add very best by random.")
             print(ga_instance.population)
-            ga_instance.population += numpy.array(gene_watcher.create_best_gene(),dtype=object)
-            print(ga_instance.population)
+            ga_instance.population += numpy.array(gene_watcher.create_best_gene() ,dtype=object)
+            print(f'New pop size: {len(ga_instance.population)}')
+
 
     ga = pygad.GA(
         gene_space=gene_manager.gene_space(),
@@ -118,7 +126,7 @@ if __name__ == '__main__':
         gene_type=gene_manager.gene_type(),
         allow_duplicate_genes=True,
         initial_population=[gene_manager.rnd() for _ in range(0, 10)],
-        num_generations=100,
+        num_generations=20,
         fitness_func=_fitness_func,
         num_parents_mating=4,
         mutation_by_replacement=True,
@@ -126,6 +134,8 @@ if __name__ == '__main__':
         # save_best_solutions=True,
         mutation_type=_mutate_to_best_known
     )
+
+    print(gene_manager.gene_space())
 
     ga.run()
     ga.summary()
@@ -136,3 +146,4 @@ if __name__ == '__main__':
     print(gene_manager.gene_type())
 
     print(gene_watcher.create_best_gene())
+
